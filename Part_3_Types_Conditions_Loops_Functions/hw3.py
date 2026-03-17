@@ -100,12 +100,12 @@ def cost(command: list[str]) -> None:
 
 
 def calculate_month_incomes(target_month: int, target_year: int) -> float:
-    month_incomes = 0
+    month_incomes: float = 0
     for data, income_value in incomes.items():
         extracted_date = extract_date(data)
         if extracted_date is None:
             continue
-        if (extracted_date[2] == target_year and 
+        if (extracted_date[2] == target_year and
             extracted_date[1] == target_month):
             month_incomes += income_value
     return month_incomes
