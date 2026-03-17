@@ -135,11 +135,13 @@ def get_string(summa: float) -> str:
 
 
 def print_detalization(category_costs: dict[str, float]) -> None:
-    for i, (category, cost) in enumerate(sorted(category_costs.items(), key=lambda x: x[0]), 1):
+    number = 1
+    for category, cost in sorted(category_costs.items(), key=lambda x: x[0]):
         if cost == int(cost):
-            print(f"{i}. {category}: {int(cost)}\n")
+            print(f"{number}. {category}: {int(cost)}\n")
         else:
-            print(f"{i}. {category}: {cost:.2f}\n")
+            print(f"{number}. {category}: {cost:.2f}\n")
+        number += 1
 
 
 def stats(command: list[str]) -> None:
