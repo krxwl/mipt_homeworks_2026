@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 UNKNOWN_COMMAND_MSG = "Неизвестная команда!"
 NONPOSITIVE_VALUE_MSG = "Значение должно быть больше нуля!"
 INCORRECT_DATE_MSG = "Неправильная дата!"
@@ -125,7 +127,7 @@ def calculate_month_costs(date: tuple[int, int, int]) -> tuple[float, dict[str, 
             for category, cost_value in categories.items():
                 month_costs += cost_value
                 category_costs[category] = category_costs.get(category, 0.0) + cost_value
-    return tuple(month_costs, category_costs)
+    return month_costs, category_costs
 
 def stats(command: list[str]) -> None:
     date_tuple = extract_date(command[1])
