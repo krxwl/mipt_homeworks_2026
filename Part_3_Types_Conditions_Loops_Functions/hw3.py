@@ -105,27 +105,27 @@ def calculate_month_incomes(target_month: int, target_year: int) -> float:
         extracted_date = extract_date(data)
         if extracted_date is None:
             continue
-        if (extracted_date[2] == target_year and
-            extracted_date[1] == target_month):
+        if (extracted_date[2] == target_year and extracted_date[1] == target_month):
             month_incomes += income_value
     return month_incomes
 
 
 def calculate_month_costs(
         target_month: int, target_year: int) -> tuple[float, dict[str, float]]:
-    month_costs: float = 0
-    category_costs: dict[str, float] = {}
-    for cost_date, categories in costs.items():
-        extracted_date = extract_date(cost_date)
-        if extracted_date is None:
-            continue
-        if (extracted_date[2] == target_year and
-            extracted_date[1] == target_month):
-            for category, cost_value in categories.items():
-                month_costs += cost_value
-                category_costs[category] = category_costs.get(category, 0) + cost_value
-    return month_costs, category_costs
+    result = {"total": 0.0, "categories": {}}
 
+    for date, cats in costs.items():
+        data = extract_date(date)
+        if data and data[2] == target_year and data[1] == target_month:
+            for cat, val in cats.items():
+                result["total"] += val
+                result["categories"][cat] = result["categories"].get(cat, 0) + val
+
+    return result["total"], result["categories"]
+
+
+def get_string(sum: float) -> str:
+    return PROFIT if (sum >= 0) else LOSS
 
 def stats(command: list[str]) -> None:
     date_tuple = extract_date(command[1])
@@ -141,9 +141,7 @@ def stats(command: list[str]) -> None:
 
     print(f"Ваша статистика по состоянию на {command[1]}:")
     print(f"Суммарный капитал: {get_capital():.2f} рублей")
-    print(f"B этом месяце {PROFIT if (
-        month_incomes - month_costs >= 0) else LOSS} {abs(
-        month_incomes - month_costs):.2f} рублей")
+    print(f"B этом месяце {get_string(month_incomes - month_costs)} {abs(month_incomes - month_costs):.2f} рублей")
     print(f"Доходы: {month_incomes:.2f} рублей")
     print(f"Расходы: {month_costs:.2f} рублей\n")
     print("Детализация (категория: сумма):")
@@ -159,22 +157,43 @@ def stats(command: list[str]) -> None:
             print(f"{i}. {category}: {cost:.2f}")
 
 
+def check_is_income(txt_cmd: str, command: list[str]) -> bool:
+    return txt_cmd == "income" and len(command) == args_for_commands[command[0]]
+
+
+def check_is_cost(txt_cmd: str, command: list[str]) -> bool:
+    return txt_cmd == "cost" and len(command) == args_for_commands[command[0]]
+
+
+def check_is_stats(txt_cmd: str, command: list[str]) -> bool:
+    return txt_cmd == "stats" and len(command) == args_for_commands[command[0]]
+
+
+def check_is_income(txt_cmd: str, command: list[str]) -> bool:
+    return txt_cmd == "income" and len(command) == args_for_commands[command[0]]
+
+
+def match_the_command(command: list[str]) -> bool:
+    if not command:
+        return False
+    txt_cmd = command[0]
+    if check_is_income(txt_cmd, command):
+        income(command)
+    elif check_is_cost(txt_cmd, command):
+        cost(command)
+    elif check_is_stats(txt_cmd, command):
+        stats(command)
+    elif txt_cmd == "exit":
+        return True
+    else:
+        print(UNKNOWN_COMMAND_MSG)
+
+
 def main() -> None:
     while True:
         command = input().strip().split()
-        if not command:
-            continue
-        txt_cmd = command[0]
-        if txt_cmd == "income" and len(command) == args_for_commands[command[0]]:
-            income(command)
-        elif txt_cmd == "cost" and len(command) == args_for_commands[command[0]]:
-            cost(command)
-        elif txt_cmd == "stats" and len(command) == args_for_commands[command[0]]:
-            stats(command)
-        elif txt_cmd == "exit":
+        if (not match_the_command(command)):
             break
-        else:
-            print(UNKNOWN_COMMAND_MSG)
 
 
 if __name__ == "__main__":
