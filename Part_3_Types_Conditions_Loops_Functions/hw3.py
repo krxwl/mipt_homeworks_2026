@@ -103,8 +103,8 @@ def cost(command: list[str]) -> None:
 def calculate_month_incomes(date: tuple[int, int, int]) -> float:
     _, target_month, target_year = date
     month_incomes = 0.0
-    for date, income_value in incomes.items():
-        extracted_date = extract_date(date)
+    for data, income_value in incomes.items():
+        extracted_date = extract_date(data)
         if extracted_date is None:
             continue
         _, month, year = extracted_date
@@ -113,7 +113,7 @@ def calculate_month_incomes(date: tuple[int, int, int]) -> float:
     return month_incomes
 
 def calculate_month_costs(date: tuple[int, int, int]) -> tuple[float, dict[str, float]]:
-    month_costs, = 0.0
+    month_costs: float = 0.0
     _, target_month, target_year = date
     category_costs: dict[str, float] = {}
     for cost_date, categories in costs.items():
@@ -125,7 +125,7 @@ def calculate_month_costs(date: tuple[int, int, int]) -> tuple[float, dict[str, 
             for category, cost_value in categories.items():
                 month_costs += cost_value
                 category_costs[category] = category_costs.get(category, 0.0) + cost_value
-    return tuple(month, category_costs)
+    return tuple(month_costs, category_costs)
 
 def stats(command: list[str]) -> None:
     date_tuple = extract_date(command[1])
@@ -133,12 +133,11 @@ def stats(command: list[str]) -> None:
         print(INCORRECT_DATE_MSG)
         return
 
-    _, target_month, target_year = date_tuple
     date_str = command[1]
 
     month_incomes = calculate_month_incomes(date_tuple)
 
-    month_costs, category_costs = calculate_month_costs()
+    month_costs, category_costs = calculate_month_costs(date_tuple)
 
     changes = month_incomes - month_costs
     loss_or_profit = PROFIT if changes >= 0 else LOSS
