@@ -73,12 +73,12 @@ def main() -> None:
         if command[0] == "income" and len(command) == args_for_commands[command[0]]:
             amount = get_correct_float(command[1])
             if amount <= 0:
-                # print(NONPOSITIVE_VALUE_MSG)
+                print(NONPOSITIVE_VALUE_MSG)
                 continue
 
             data = extract_date(command[2])
             if data is None:
-                # print(INCORRECT_DATE_MSG)
+                print(INCORRECT_DATE_MSG)
                 continue
 
             date_str = command[2]
@@ -86,19 +86,19 @@ def main() -> None:
                 incomes[date_str] += amount
             else:
                 incomes[date_str] = amount
-            # print(OP_SUCCESS_MSG)
+            print(OP_SUCCESS_MSG)
             
         elif command[0] == "cost" and len(command) == args_for_commands[command[0]]:
             category_name = command[1]
 
             amount = get_correct_float(command[2])
             if amount <= 0:
-                # print(NONPOSITIVE_VALUE_MSG)
+                print(NONPOSITIVE_VALUE_MSG)
                 continue
 
             data = extract_date(command[3])
             if data is None:
-                # print(INCORRECT_DATE_MSG)
+                print(INCORRECT_DATE_MSG)
                 continue
 
             date_str = command[3]
@@ -109,12 +109,12 @@ def main() -> None:
                 costs[date_str][category_name] += amount
             else:
                 costs[date_str][category_name] = amount
-            # print(OP_SUCCESS_MSG)
+            print(OP_SUCCESS_MSG)
             
         elif command[0] == "stats" and len(command) == args_for_commands[command[0]]:
             date_tuple = extract_date(command[1])
             if date_tuple is None:
-                # print(INCORRECT_DATE_MSG)
+                print(INCORRECT_DATE_MSG)
                 continue
 
             _, target_month, target_year = date_tuple
@@ -137,32 +137,32 @@ def main() -> None:
                         month_costs += cost_value
                         category_costs[category] = category_costs.get(category, 0.0) + cost_value
 
-            # changes = month_incomes - month_costs
-            # loss_or_profit = PROFIT if changes >= 0 else LOSS
-            # abs_changes = abs(changes)
-            # capital = get_capital()
+            changes = month_incomes - month_costs
+            loss_or_profit = PROFIT if changes >= 0 else LOSS
+            abs_changes = abs(changes)
+            capital = get_capital()
 
-            # print(f"Ваша статистика по состоянию на {date_str}:")
-            # print(f"Суммарный капитал: {capital:.2f} рублей")
-            # print(f"В этом месяце {loss_or_profit} {abs_changes:.2f} рублей")
-            # print(f"Доходы: {month_incomes:.2f} рублей")
-            # print(f"Расходы: {month_costs:.2f} рублей\n")
-            # print("Детализация (категория: сумма):")
+            print(f"Ваша статистика по состоянию на {date_str}:")
+            print(f"Суммарный капитал: {capital:.2f} рублей")
+            print(f"В этом месяце {loss_or_profit} {abs_changes:.2f} рублей")
+            print(f"Доходы: {month_incomes:.2f} рублей")
+            print(f"Расходы: {month_costs:.2f} рублей\n")
+            print("Детализация (категория: сумма):")
 
             if not category_costs:
                 continue
 
-            # sorted_categories = sorted(category_costs.items(), key=lambda x: x[0])
-            # for i, (category, cost) in enumerate(sorted_categories, 1):
-                # if cost == int(cost):
-                    # pass
-                    # print(f"{i}. {category}: {int(cost)}")
-                # else:
-                    # pass
-                    # print(f"{i}. {category}: {cost:.2f}")
+            sorted_categories = sorted(category_costs.items(), key=lambda x: x[0])
+            for i, (category, cost) in enumerate(sorted_categories, 1):
+                if cost == int(cost):
+                    pass
+                    print(f"{i}. {category}: {int(cost)}")
+                else:
+                    pass
+                    print(f"{i}. {category}: {cost:.2f}")
         else:
             pass
-            # print(UNKNOWN_COMMAND_MSG)
+            print(UNKNOWN_COMMAND_MSG)
 
 
 if __name__ == "__main__":
