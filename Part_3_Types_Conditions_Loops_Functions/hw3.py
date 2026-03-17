@@ -112,7 +112,7 @@ def calculate_month_incomes(target_month: int, target_year: int) -> float:
 
 def recalculate_categories(categories: dict[str, float]) -> None:
     for cats in costs.values():
-        for cat, val in cats.keys():
+        for cat, val in cats.items():
             categories[cat] = categories.get(cat, 0) + val
 
 
