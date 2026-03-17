@@ -36,7 +36,8 @@ MONTHS_IN_YEAR = 12
 
 
 def is_leap_year(year: int) -> bool:
-    return (year % 4 == 0 and year % 100 != 0) or (year % 100 == 0 and year % 400 == 0)
+    return ((year % 4 == 0 and year % 100 != 0) or
+            (year % 100 == 0 and year % 400 == 0))
 
 
 def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
@@ -53,13 +54,12 @@ def get_correct_float(my_float: str) -> float:
 
 
 def get_capital() -> float:
-    capital = 0.0
-    for income_value in incomes.values():
-        capital += income_value
+    capital = sum(incomes.values())
     for categories in costs.values():
         for cost_value in categories.values():
             capital -= cost_value
     return capital
+
 
 def income(command: list[str]) -> None:
     amount = get_correct_float(command[1])
@@ -73,11 +73,9 @@ def income(command: list[str]) -> None:
         return
 
     date_str = command[2]
-    if date_str in incomes:
-        incomes[date_str] += amount
-    else:
-        incomes[date_str] = amount
+    incomes[date_str] = incomes.get(date_str, 0) + amount
     print(OP_SUCCESS_MSG)
+
 
 def cost(command: list[str]) -> None:
     category_name = command[1]
@@ -95,39 +93,39 @@ def cost(command: list[str]) -> None:
     date_str = command[3]
     if date_str not in costs:
         costs[date_str] = {}
+    costs[date_str] = costs.get(date_str, {})
+    costs[date_str][category_name] = (costs[date_str]
+                                      .get(category_name, 0) + amount)
+    print(OP_SUCCESS_MSG)
 
-    if category_name in costs[date_str]:
-        costs[date_str][category_name] += amount
-    else:
-        costs[date_str][category_name] = amount
-        print(OP_SUCCESS_MSG)
 
-def calculate_month_incomes(date: tuple[int, int, int]) -> float:
-    _, target_month, target_year = date
-    month_incomes = 0.0
+def calculate_month_incomes(target_month: int, target_year: int) -> float:
+    month_incomes = 0
     for data, income_value in incomes.items():
         extracted_date = extract_date(data)
         if extracted_date is None:
             continue
-        _, month, year = extracted_date
-        if year == target_year and month == target_month:
+        if (extracted_date[2] == target_year and 
+            extracted_date[1] == target_month):
             month_incomes += income_value
     return month_incomes
 
-def calculate_month_costs(date: tuple[int, int, int]) -> tuple[float, dict[str, float]]:
-    month_costs: float = 0.0
-    _, target_month, target_year = date
+
+def calculate_month_costs(
+        target_month: int, target_year: int) -> tuple[float, dict[str, float]]:
+    month_costs: float = 0
     category_costs: dict[str, float] = {}
     for cost_date, categories in costs.items():
         extracted_date = extract_date(cost_date)
         if extracted_date is None:
             continue
-        _, month, year = extracted_date
-        if year == target_year and month == target_month:
+        if (extracted_date[2] == target_year and
+            extracted_date[1] == target_month):
             for category, cost_value in categories.items():
                 month_costs += cost_value
-                category_costs[category] = category_costs.get(category, 0.0) + cost_value
+                category_costs[category] = category_costs.get(category, 0) + cost_value
     return month_costs, category_costs
+
 
 def stats(command: list[str]) -> None:
     date_tuple = extract_date(command[1])
@@ -135,20 +133,17 @@ def stats(command: list[str]) -> None:
         print(INCORRECT_DATE_MSG)
         return
 
-    date_str = command[1]
+    month_incomes = calculate_month_incomes(
+        date_tuple[1], date_tuple[2])
 
-    month_incomes = calculate_month_incomes(date_tuple)
+    month_costs, category_costs = calculate_month_costs(
+        date_tuple[1], date_tuple[2])
 
-    month_costs, category_costs = calculate_month_costs(date_tuple)
-
-    changes = month_incomes - month_costs
-    loss_or_profit = PROFIT if changes >= 0 else LOSS
-    abs_changes = abs(changes)
-    capital = get_capital()
-
-    print(f"Ваша статистика по состоянию на {date_str}:")
-    print(f"Суммарный капитал: {capital:.2f} рублей")
-    print(f"B этом месяце {loss_or_profit} {abs_changes:.2f} рублей")
+    print(f"Ваша статистика по состоянию на {command[1]}:")
+    print(f"Суммарный капитал: {get_capital():.2f} рублей")
+    print(f"B этом месяце {PROFIT if (
+        month_incomes - month_costs >= 0) else LOSS} {abs(
+        month_incomes - month_costs):.2f} рублей")
     print(f"Доходы: {month_incomes:.2f} рублей")
     print(f"Расходы: {month_costs:.2f} рублей\n")
     print("Детализация (категория: сумма):")
@@ -169,13 +164,15 @@ def main() -> None:
         command = input().strip().split()
         if not command:
             continue
-
-        if command[0] == "income" and len(command) == args_for_commands[command[0]]:
+        txt_cmd = command[0]
+        if txt_cmd == "income" and len(command) == args_for_commands[command[0]]:
             income(command)
-        elif command[0] == "cost" and len(command) == args_for_commands[command[0]]:
+        elif txt_cmd == "cost" and len(command) == args_for_commands[command[0]]:
             cost(command)
-        elif command[0] == "stats" and len(command) == args_for_commands[command[0]]:
+        elif txt_cmd == "stats" and len(command) == args_for_commands[command[0]]:
             stats(command)
+        elif txt_cmd == "exit":
+            break
         else:
             print(UNKNOWN_COMMAND_MSG)
 
