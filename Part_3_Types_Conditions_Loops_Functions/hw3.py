@@ -6,7 +6,7 @@ LOSS = "убыток составил"
 PROFIT = "прибыль составила"
 
 incomes: dict[str, float] = {}
-costs: dict[str, dict] = {}
+costs: dict[str, dict[str, float]] = {}
 
 days_to_months = {
     1: 31,
@@ -100,15 +100,8 @@ def cost(command: list[str]) -> None:
         costs[date_str][category_name] = amount
         print(OP_SUCCESS_MSG)
 
-def stats(command: list[str]) -> None:
-    date_tuple = extract_date(command[1])
-    if date_tuple is None:
-        print(INCORRECT_DATE_MSG)
-        return
-
-    _, target_month, target_year = date_tuple
-    date_str = command[1]
-
+def calculate_month_incomes(date: tuple[int, int, int]) -> float:
+    _, target_month, target_year = date
     month_incomes = 0.0
     for date, income_value in incomes.items():
         extracted_date = extract_date(date)
@@ -117,8 +110,11 @@ def stats(command: list[str]) -> None:
         _, month, year = extracted_date
         if year == target_year and month == target_month:
             month_incomes += income_value
+    return month_incomes
 
-    month_costs = 0.0
+def calculate_month_costs(date: tuple[int, int, int]) -> tuple[float, dict[str, float]]:
+    month_costs, = 0.0
+    _, target_month, target_year = date
     category_costs: dict[str, float] = {}
     for cost_date, categories in costs.items():
         extracted_date = extract_date(cost_date)
@@ -129,6 +125,20 @@ def stats(command: list[str]) -> None:
             for category, cost_value in categories.items():
                 month_costs += cost_value
                 category_costs[category] = category_costs.get(category, 0.0) + cost_value
+    return tuple(month, category_costs)
+
+def stats(command: list[str]) -> None:
+    date_tuple = extract_date(command[1])
+    if date_tuple is None:
+        print(INCORRECT_DATE_MSG)
+        return
+
+    _, target_month, target_year = date_tuple
+    date_str = command[1]
+
+    month_incomes = calculate_month_incomes(date_tuple)
+
+    month_costs, category_costs = calculate_month_costs()
 
     changes = month_incomes - month_costs
     loss_or_profit = PROFIT if changes >= 0 else LOSS
