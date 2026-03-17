@@ -133,6 +133,15 @@ def calculate_month_costs(
 def get_string(summa: float) -> str:
     return PROFIT if (summa >= 0) else LOSS
 
+
+def print_detalization(category_costs: dict[str, float]) -> None:
+    for i, (category, cost) in enumerate(sorted(category_costs.items(), key=lambda x: x[0]), 1):
+        if cost == int(cost):
+            print(f"{i}. {category}: {int(cost)}\n")
+        else:
+            print(f"{i}. {category}: {cost:.2f}\n")
+
+
 def stats(command: list[str]) -> None:
     date_tuple = extract_date(command[1])
     if date_tuple is None:
@@ -145,22 +154,18 @@ def stats(command: list[str]) -> None:
     month_costs, category_costs = calculate_month_costs(
         date_tuple[1], date_tuple[2])
 
-    print(f"Ваша статистика по состоянию на {command[1]}:")
-    print(f"Суммарный капитал: {get_capital():.2f} рублей")
-    print(f"B этом месяце {get_string(month_incomes - month_costs)} {abs(month_incomes - month_costs):.2f} рублей")
-    print(f"Доходы: {month_incomes:.2f} рублей")
+    print(f"Ваша статистика по состоянию на {command[1]}:\n")
+    print(f"Суммарный капитал: {get_capital():.2f} рублей\n")
+    print(f"B этом месяце {get_string(month_incomes - month_costs)}")
+    print(f" {abs(month_incomes - month_costs):.2f} рублей\n")
+    print(f"Доходы: {month_incomes:.2f} рублей\n")
     print(f"Расходы: {month_costs:.2f} рублей\n")
     print("Детализация (категория: сумма):")
 
     if not category_costs:
         return
 
-    sorted_categories = sorted(category_costs.items(), key=lambda x: x[0])
-    for i, (category, cost) in enumerate(sorted_categories, 1):
-        if cost == int(cost):
-            print(f"{i}. {category}: {int(cost)}")
-        else:
-            print(f"{i}. {category}: {cost:.2f}")
+    print(category_costs)
 
 
 def check_is_income(txt_cmd: str, command: list[str]) -> bool:
