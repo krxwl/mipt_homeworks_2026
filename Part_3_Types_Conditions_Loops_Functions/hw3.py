@@ -110,22 +110,28 @@ def calculate_month_incomes(target_month: int, target_year: int) -> float:
     return month_incomes
 
 
+def recalculate_categories(categories: dict[str, float]) -> None:
+    for cats in costs.values():
+        for cat, val in cats.keys():
+            categories[cat] = categories.get(cat, 0) + val
+
+
 def calculate_month_costs(
         target_month: int, target_year: int) -> tuple[float, dict[str, float]]:
-    result = {"total": 0.0, "categories": {}}
+    total: float = 0
+    categories: dict[str, float] = {}
 
     for date, cats in costs.items():
         data = extract_date(date)
         if data and data[2] == target_year and data[1] == target_month:
-            for cat, val in cats.items():
-                result["total"] += val
-                result["categories"][cat] = result["categories"].get(cat, 0) + val
+            total += sum(cats.values())
+    recalculate_categories(categories)
 
-    return result["total"], result["categories"]
+    return total, categories
 
 
-def get_string(sum: float) -> str:
-    return PROFIT if (sum >= 0) else LOSS
+def get_string(summa: float) -> str:
+    return PROFIT if (summa >= 0) else LOSS
 
 def stats(command: list[str]) -> None:
     date_tuple = extract_date(command[1])
@@ -169,10 +175,6 @@ def check_is_stats(txt_cmd: str, command: list[str]) -> bool:
     return txt_cmd == "stats" and len(command) == args_for_commands[command[0]]
 
 
-def check_is_income(txt_cmd: str, command: list[str]) -> bool:
-    return txt_cmd == "income" and len(command) == args_for_commands[command[0]]
-
-
 def match_the_command(command: list[str]) -> bool:
     if not command:
         return False
@@ -187,6 +189,7 @@ def match_the_command(command: list[str]) -> bool:
         return True
     else:
         print(UNKNOWN_COMMAND_MSG)
+    return False
 
 
 def main() -> None:
