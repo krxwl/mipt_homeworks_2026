@@ -136,7 +136,8 @@ def get_string(summa: float) -> str:
 
 def print_detalization(category_costs: dict[str, float]) -> None:
     number = 1
-    for category, cost in sorted(category_costs.items(), key=lambda x: x[0]):
+    sorted_list = sorted(category_costs.items(), key=lambda x: x[0])
+    for category, cost in sorted_list:
         if cost == int(cost):
             print(f"{number}. {category}: {int(cost)}\n")
         else:
