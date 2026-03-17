@@ -149,6 +149,10 @@ def stats(command) -> None:
             print(f"{i}. {category}: {cost:.2f}")
     
 
+def income_handler(amount: float, income_date: str) -> str:
+    return f"{OP_SUCCESS_MSG} {amount=} {income_date=}"
+
+
 def main() -> None:
     while True:
         command = input().strip().split()
