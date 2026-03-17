@@ -5,8 +5,8 @@ OP_SUCCESS_MSG = "Добавлено"
 LOSS = "убыток составил"
 PROFIT = "прибыль составила"
 
-incomes = {}
-costs = {}
+incomes: dict[str, float] = {}
+costs: dict[str, dict] = {}
 
 days_to_months = {
     1: 31,
@@ -59,7 +59,7 @@ def get_capital() -> float:
             capital -= cost_value
     return capital
 
-def income(command) -> None:
+def income(command: list[str]) -> None:
     amount = get_correct_float(command[1])
     if amount <= 0:
         print(NONPOSITIVE_VALUE_MSG)
@@ -77,7 +77,7 @@ def income(command) -> None:
         incomes[date_str] = amount
     print(OP_SUCCESS_MSG)
 
-def cost(command) -> None:
+def cost(command: list[str]) -> None:
     category_name = command[1]
 
     amount = get_correct_float(command[2])
@@ -100,7 +100,7 @@ def cost(command) -> None:
         costs[date_str][category_name] = amount
         print(OP_SUCCESS_MSG)
 
-def stats(command) -> None:
+def stats(command: list[str]) -> None:
     date_tuple = extract_date(command[1])
     if date_tuple is None:
         print(INCORRECT_DATE_MSG)
@@ -112,14 +112,18 @@ def stats(command) -> None:
     month_incomes = 0.0
     for date, income_value in incomes.items():
         extracted_date = extract_date(date)
+        if extracted_date is None:
+            continue
         _, month, year = extracted_date
         if year == target_year and month == target_month:
             month_incomes += income_value
 
     month_costs = 0.0
-    category_costs = {}
+    category_costs: dict[str, float] = {}
     for cost_date, categories in costs.items():
         extracted_date = extract_date(cost_date)
+        if extracted_date is None:
+            continue
         _, month, year = extracted_date
         if year == target_year and month == target_month:
             for category, cost_value in categories.items():
@@ -133,7 +137,7 @@ def stats(command) -> None:
 
     print(f"Ваша статистика по состоянию на {date_str}:")
     print(f"Суммарный капитал: {capital:.2f} рублей")
-    print(f"В этом месяце {loss_or_profit} {abs_changes:.2f} рублей")
+    print(f"B этом месяце {loss_or_profit} {abs_changes:.2f} рублей")
     print(f"Доходы: {month_incomes:.2f} рублей")
     print(f"Расходы: {month_costs:.2f} рублей\n")
     print("Детализация (категория: сумма):")
@@ -147,7 +151,7 @@ def stats(command) -> None:
             print(f"{i}. {category}: {int(cost)}")
         else:
             print(f"{i}. {category}: {cost:.2f}")
-    
+
 
 def main() -> None:
     while True:
