@@ -268,6 +268,7 @@ def format_stats_details(category_costs: dict[str, float]) -> str:
 
     return "".join(["\n", "\n".join(lines), "\n"])
 
+
 def get_str_profit_or_loss(profit_loss: float) -> str:
     if profit_loss >= 0:
         return f"This month, the profit amounted to {profit_loss:.2f} rubles."
@@ -327,26 +328,24 @@ def validate_cost_date(date_str: str) -> str | None:
 
 
 def validate_cost_command(command: list[str]) -> str:
+    result: str = UNKNOWN_COMMAND_MSG
+
     if len(command) == COST_COMMAND_LENGTH and command[1] == "categories":
-        return cost_categories_handler()
+        result = cost_categories_handler()
+    elif len(command) == COST_COMMAND_LENGTH2:
+        category_name = command[1]
+        error: str | None = validate_cost_category(category_name)
 
-    if len(command) != COST_COMMAND_LENGTH2:
-        return UNKNOWN_COMMAND_MSG
+        if error is None:
+            amount, error = validate_cost_amount(command[2])
+            if error is None:
+                error = validate_cost_date(command[3])
+                if error is None:
+                    result = cost_handler(category_name, amount, command[3])
+        if error is not None:
+            result = error
 
-    category_name = command[1]
-    error = validate_cost_category(category_name)
-    if error:
-        return error
-
-    amount, error = validate_cost_amount(command[2])
-    if error:
-        return error
-
-    error = validate_cost_date(command[3])
-    if error:
-        return error
-
-    return cost_handler(category_name, amount, command[3])
+    return result
 
 
 def validate_stats_command(command: list[str]) -> str:
