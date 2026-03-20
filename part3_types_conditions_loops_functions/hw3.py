@@ -64,7 +64,13 @@ def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
 
 
 def get_correct_float(my_float: str) -> float | None:
-    return float(my_float.replace(",", "."))
+    my_float = my_float.replace(",", ".")
+    if my_float.count(".") > 1:
+        return None
+    parts = my_float.split(".")
+    if not all(part.isdigit() for part in parts if part):
+        return None
+    return float(my_float)
 
 
 def is_valid_category(category_name: str) -> bool:
@@ -158,11 +164,11 @@ def cost_handler(category_name: str, amount: float, income_date: str) -> str:
 def cost_categories_handler() -> str:
     categories = []
     for common_cat, targets in EXPENSE_CATEGORIES.items():
-        if common_cat == "Other":
-            categories.append("Other")
-        else:
+        if targets:
             for target_cat in targets:
                 categories.append(f"{common_cat}::{target_cat}")
+        else:
+            categories.append(common_cat)
     return "\n".join(categories)
 
 
@@ -183,7 +189,7 @@ def calculate_month_incomes(target_month: int, target_year: int) -> float:
     return month_incomes
 
 
-def proccess_transaction(total: float, categories: dict[str, float], transaction: dict[str, Any]) -> None:
+def proccess_transaction(total: float, categories: dict[str, float], transaction: dict[str, Any]) -> float:
     amount = get_transaction_amount(transaction)
     total += amount
     cat = get_transaction_category(transaction)
