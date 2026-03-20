@@ -25,6 +25,8 @@ EXPENSE_CATEGORIES = {
     "Other": ("Cat",),
 }
 
+DateTuple = tuple[int, int, int]
+
 financial_transactions_storage: list[dict[str, Any]] = []
 
 FEBRUARY = 2
@@ -227,7 +229,7 @@ def calculate_month_costs(target_month: int, target_year: int) -> tuple[float, d
     return total, categories
 
 
-def compare_dates(date1: tuple[int, int, int], date2: tuple[int, int, int]) -> bool:
+def compare_dates(date1: DateTuple, date2: DateTuple) -> bool:
     if date1[2] != date2[2]:
         return date1[2] < date2[2]
     if date1[1] != date2[1]:
