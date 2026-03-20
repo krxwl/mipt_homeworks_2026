@@ -25,6 +25,13 @@ financial_transactions_storage: list[dict[str, Any]] = []
 FEBRUARY = 2
 MONTHS_IN_YEAR = 12
 
+DATE_LENGTH = 3
+CATEGORY_LENGTH = 2
+COMMAND_LENGTH = 3
+COST_COMMAND_LENGTH = 2
+COST_COMMAND_LENGTH2 = 4
+STATS_COMMAND_LENGTH = 2
+
 days_to_months = {
     1: 31,
     2: 28,
@@ -48,11 +55,12 @@ def is_leap_year(year: int) -> bool:
 
 def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
     parts = maybe_dt.split("-")
-    if len(parts) != 3:
+    if len(parts) != DATE_LENGTH:
         return None
 
-    if any([not part.isdigit() for part in parts]):
-        return None
+    for part in parts:
+        if not part.isdigit():
+            return None
 
     max_days = days_to_months.get(int(parts[1]), 0)
     if int(parts[1]) == FEBRUARY and is_leap_year(int(parts[2])):
@@ -78,30 +86,29 @@ def is_valid_category(category_name: str) -> bool:
         return False
 
     parts = category_name.split("::")
-    if len(parts) != 2:
+    if len(parts) != CATEGORY_LENGTH:
         return False
 
     if parts[0] not in EXPENSE_CATEGORIES:
         return False
-    elif parts[0] == "Other":
+    if parts[0] == "Other":
         return True
     return parts[1] in EXPENSE_CATEGORIES[parts[0]]
 
 
 def get_all_categories() -> list[str]:
-    categories = []
+    categories: list[str] = []
     for common_cat, targets in EXPENSE_CATEGORIES.items():
-        for target_cat in targets:
-            categories.append(f"{common_cat}::{target_cat}")
+        categories.extend(f"{common_cat}::{target_cat}" for target_cat in targets)
     return categories
 
 
 def is_income_transaction(transaction: dict[str, Any]) -> bool:
-    return transaction.get("income", False)
+    return bool(transaction.get("income", False))
 
 
 def get_transaction_amount(transaction: dict[str, Any]) -> float:
-    return transaction.get("amount", 0)
+    return float(transaction.get("amount", 0))
 
 
 def get_transaction_date(transaction: dict[str, Any]) -> tuple[int, int, int] | None:
@@ -109,19 +116,18 @@ def get_transaction_date(transaction: dict[str, Any]) -> tuple[int, int, int] | 
 
 
 def get_transaction_category(transaction: dict[str, Any]) -> str:
-    return transaction.get("category", "Other")
+    return str(transaction.get("category", "Other"))
 
 
 def change_capital(capital: float, operation: dict[str, Any]) -> float:
     amount = get_transaction_amount(operation)
     if is_income_transaction(operation):
         return capital + amount
-    else:
-        return capital - amount
+    return capital - amount
 
 
 def calculate_capital() -> float:
-    capital = 0
+    capital: float = 0.0
 
     for operation in financial_transactions_storage:
         capital = change_capital(capital, operation)
@@ -179,7 +185,7 @@ def is_transaction_in_month(transaction_date: tuple[int, int, int] | None, targe
 
 
 def calculate_month_incomes(target_month: int, target_year: int) -> float:
-    month_incomes = 0
+    month_incomes: float = 0.0
     for transaction in financial_transactions_storage:
         if not is_income_transaction(transaction):
             continue
@@ -197,7 +203,7 @@ def proccess_transaction(total: float, categories: dict[str, float], transaction
 
 
 def calculate_month_costs(target_month: int, target_year: int) -> tuple[float, dict[str, float]]:
-    total: float = 0
+    total: float = 0.0
     categories: dict[str, float] = {}
 
     for transaction in financial_transactions_storage:
@@ -220,11 +226,11 @@ def compare_dates(date1: tuple[int, int, int], date2: tuple[int, int, int]) -> b
 def calculate_capital_until_date(target_date: str) -> float:
     data = extract_date(target_date)
     if data is None:
-        return 0
-    capital: float = 0
+        return 0.0
+    capital: float = 0.0
 
     for operation in financial_transactions_storage:
-        t_data = extract_date(get_transaction_date(operation))
+        t_data = get_transaction_date(operation)
         if t_data is None:
             continue
         if not compare_dates(t_data, data):
@@ -279,22 +285,22 @@ def stats_handler(report_date: str) -> str:
 
 
 def recognize_command(command: list[str]) -> str:
-    if len(command) != 3:
+    if len(command) != COMMAND_LENGTH:
         return UNKNOWN_COMMAND_MSG
 
     amount = get_correct_float(command[1])
     if amount is None or amount <= 0:
         return NONPOSITIVE_VALUE_MSG
-    elif extract_date(command[2]) is None:
+    if extract_date(command[2]) is None:
         return INCORRECT_DATE_MSG
     return income_handler(amount, command[2])
 
 
 def validate_cost_command(command: list[str]) -> str:
-    if len(command) == 2 and command[1] == "categories":
+    if len(command) == COST_COMMAND_LENGTH and command[1] == "categories":
         return cost_categories_handler()
 
-    if len(command) != 4:
+    if len(command) != COST_COMMAND_LENGTH2:
         return UNKNOWN_COMMAND_MSG
 
     category_name = command[1]
@@ -304,14 +310,14 @@ def validate_cost_command(command: list[str]) -> str:
     amount = get_correct_float(command[2])
     if amount is None or amount <= 0:
         return NONPOSITIVE_VALUE_MSG
-    elif extract_date(command[3]) is None:
+    if extract_date(command[3]) is None:
         return INCORRECT_DATE_MSG
 
     return cost_handler(category_name, amount, command[3])
 
 
 def validate_stats_command(command: list[str]) -> str:
-    if len(command) != 2:
+    if len(command) != STATS_COMMAND_LENGTH:
         return UNKNOWN_COMMAND_MSG
     return stats_handler(command[1])
 
@@ -323,11 +329,11 @@ def parse_command(command: list[str]) -> str:
     cmd = command[0]
     if cmd == "income":
         return recognize_command(command)
-    elif cmd == "cost":
+    if cmd == "cost":
         return validate_cost_command(command)
-    elif cmd == "stats":
+    if cmd == "stats":
         return validate_stats_command(command)
-    elif cmd == "exit":
+    if cmd == "exit":
         return "exit"
     return UNKNOWN_COMMAND_MSG
 
