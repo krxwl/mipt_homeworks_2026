@@ -280,16 +280,13 @@ def stats_handler(report_date: str) -> str:
     if date_tuple is None:
         return INCORRECT_DATE_MSG
 
-    month, year = date_tuple[1], date_tuple[2]
-    month_incomes = calculate_month_incomes(month, year)
-    month_costs, category_costs = calculate_month_costs(month, year)
-    total_capital = calculate_capital_until_date(report_date)
-    profit_loss = month_incomes - month_costs
+    month_incomes = calculate_month_incomes(date_tuple[1], date_tuple[2])
+    month_costs, category_costs = calculate_month_costs(date_tuple[1], date_tuple[2])
 
     return "".join([
         f"Your statistics as of {report_date}:\n",
-        f"Total capital: {total_capital:.2f} rubles\n",
-        f"{get_str_profit_or_loss(profit_loss)}\n",
+        f"Total capital: {calculate_capital_until_date(report_date):.2f} rubles\n",
+        f"{get_str_profit_or_loss(month_incomes - month_costs)}\n",
         f"Income: {month_incomes:.2f} rubles\n",
         f"Expenses: {month_costs:.2f} rubles\n",
         f"Details (category: amount):{format_stats_details(category_costs)}",
@@ -327,22 +324,59 @@ def validate_cost_date(date_str: str) -> str | None:
     return None
 
 
+def is_cost_categories_command(command: list[str]) -> bool:
+    return len(command) == COST_COMMAND_LENGTH and command[1] == "categories"
+
+
+def is_valid_cost_command_length(command: list[str]) -> bool:
+    return len(command) == COST_COMMAND_LENGTH2
+
+
+def get_cost_category_error(category_name: str) -> str | None:
+    if is_valid_category(category_name):
+        return None
+    return NOT_EXISTS_CATEGORY
+
+
+def get_cost_amount_error(amount_str: str) -> str | None:
+    amount = get_correct_float(amount_str)
+    if amount is None or amount <= 0:
+        return NONPOSITIVE_VALUE_MSG
+    return None
+
+
+def get_cost_date_error(date_str: str) -> str | None:
+    if extract_date(date_str) is None:
+        return INCORRECT_DATE_MSG
+    return None
+
+
+def get_cost_validation_error(command: list[str]) -> str | None:
+    category_error = get_cost_category_error(command[1])
+    if category_error is not None:
+        return category_error
+
+    amount_error = get_cost_amount_error(command[2])
+    if amount_error is not None:
+        return amount_error
+
+    date_error = get_cost_date_error(command[3])
+    if date_error is not None:
+        return date_error
+
+    return None
+
+
 def validate_cost_command(command: list[str]) -> str:
     result: str = UNKNOWN_COMMAND_MSG
 
-    if len(command) == COST_COMMAND_LENGTH and command[1] == "categories":
+    if is_cost_categories_command(command):
         result = cost_categories_handler()
-    elif len(command) == COST_COMMAND_LENGTH2:
-        category_name = command[1]
-        error: str | None = validate_cost_category(category_name)
-
+    elif is_valid_cost_command_length(command):
+        error = get_cost_validation_error(command)
         if error is None:
-            amount, error = validate_cost_amount(command[2])
-            if error is None:
-                error = validate_cost_date(command[3])
-                if error is None:
-                    result = cost_handler(category_name, amount, command[3])
-        if error is not None:
+            result = cost_handler(command[1], command[2], command[3])
+        else:
             result = error
 
     return result
