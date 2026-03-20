@@ -374,10 +374,10 @@ def validate_cost_command(command: list[str]) -> str:
         result = cost_categories_handler()
     elif is_valid_cost_command_length(command):
         error = get_cost_validation_error(command)
-        if error is None:
-            result = cost_handler(command[1], command[2], command[3])
-        else:
-            result = error
+        category_name = command[1]
+        amount_str = command[2]
+        date_str = command[3]
+        result = cost_handler(category_name, amount_str, date_str) if error is None else error
 
     return result
 
