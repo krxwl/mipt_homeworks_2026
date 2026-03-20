@@ -90,7 +90,7 @@ def get_all_categories() -> list[str]:
         else:
             for target_cat in targets:
                 categories.append(f"{common_cat}::{target_cat}")
-    return sorted(categories)
+    return categories
 
 
 def is_income_transaction(transaction: dict[str, Any]) -> bool:
@@ -109,18 +109,18 @@ def get_transaction_category(transaction: dict[str, Any]) -> str:
     return transaction.get("category", "Other")
 
 
-def change_capital(capital: float, operation: dict[str, Any]) -> None:
+def change_capital(capital: float, operation: dict[str, Any]) -> float:
     amount = get_transaction_amount(operation)
     if is_income_transaction(operation):
-        capital += amount
+        return capital + amount
     else:
-        capital -= amount
+        return capital - amount
 
 
 def calculate_capital() -> float:
     capital = 0
     for operation in financial_transactions_storage:
-        change_capital(capital, operation)
+        capital = change_capital(capital, operation)
     return capital
 
 
@@ -156,7 +156,14 @@ def cost_handler(category_name: str, amount: float, income_date: str) -> str:
 
 
 def cost_categories_handler() -> str:
-    return "\n".join(get_all_categories())
+    categories = []
+    for common_cat, targets in EXPENSE_CATEGORIES.items():
+        if common_cat == "Other":
+            categories.append("Other")
+        else:
+            for target_cat in targets:
+                categories.append(f"{common_cat}::{target_cat}")
+    return "\n".join(categories)
 
 
 def is_transaction_in_month(transaction_date: str, target_month: int, target_year: int) -> bool:
@@ -180,8 +187,8 @@ def proccess_transaction(total: float, categories: dict[str, float], transaction
     amount = get_transaction_amount(transaction)
     total += amount
     cat = get_transaction_category(transaction)
-    current = categories.get(cat, 0)
-    categories[cat] = current + amount
+    categories[cat] = categories.get(cat, 0) + amount
+    return total
 
 
 def calculate_month_costs(target_month: int, target_year: int) -> tuple[float, dict[str, float]]:
@@ -193,7 +200,7 @@ def calculate_month_costs(target_month: int, target_year: int) -> tuple[float, d
             continue
         if not is_transaction_in_month(get_transaction_date(transaction), target_month, target_year):
             continue
-        proccess_transaction(total, categories, transaction)
+        total = proccess_transaction(total, categories, transaction)
     return total, categories
 
 
@@ -217,7 +224,7 @@ def calculate_capital_until_date(target_date: str) -> float:
             continue
         if not compare_dates(t_data, data):
             continue
-        change_capital(capital, operation)
+        capital = change_capital(capital, operation)
     return capital
 
 
