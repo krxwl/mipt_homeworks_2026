@@ -91,11 +91,8 @@ def is_valid_category(category_name: str) -> bool:
 def get_all_categories() -> list[str]:
     categories = []
     for common_cat, targets in EXPENSE_CATEGORIES.items():
-        if common_cat == "Other":
-            categories.append("Other")
-        else:
-            for target_cat in targets:
-                categories.append(f"{common_cat}::{target_cat}")
+        for target_cat in targets:
+            categories.append(f"{common_cat}::{target_cat}")
     return categories
 
 
@@ -131,11 +128,14 @@ def calculate_capital() -> float:
 
 
 def income_handler(amount: float, income_date: str) -> str:
-    if amount <= 0:
-        return NONPOSITIVE_VALUE_MSG
     date_tuple = extract_date(income_date)
+    if amount <= 0:
+        financial_transactions_storage.append({})
+        return NONPOSITIVE_VALUE_MSG
     if date_tuple is None:
+        financial_transactions_storage.append({})
         return INCORRECT_DATE_MSG
+
     financial_transactions_storage.append({
         "amount": amount,
         "date": date_tuple,
@@ -145,13 +145,19 @@ def income_handler(amount: float, income_date: str) -> str:
 
 
 def cost_handler(category_name: str, amount: float, income_date: str) -> str:
-    if not is_valid_category(category_name):
+    date_tuple = extract_date(income_date)
+    is_cat_valid = is_valid_category(category_name)
+
+    if not is_cat_valid:
+        financial_transactions_storage.append({})
         return NOT_EXISTS_CATEGORY
     if amount <= 0:
+        financial_transactions_storage.append({})
         return NONPOSITIVE_VALUE_MSG
-    date_tuple = extract_date(income_date)
     if date_tuple is None:
+        financial_transactions_storage.append({})
         return INCORRECT_DATE_MSG
+
     financial_transactions_storage.append({
         "category": category_name,
         "amount": amount,
@@ -162,21 +168,13 @@ def cost_handler(category_name: str, amount: float, income_date: str) -> str:
 
 
 def cost_categories_handler() -> str:
-    categories = []
-    for common_cat, targets in EXPENSE_CATEGORIES.items():
-        if targets:
-            for target_cat in targets:
-                categories.append(f"{common_cat}::{target_cat}")
-        else:
-            categories.append(common_cat)
-    return "\n".join(categories)
+    return "\n".join(get_all_categories())
 
 
-def is_transaction_in_month(transaction_date: str, target_month: int, target_year: int) -> bool:
-    extracted = extract_date(transaction_date)
-    if extracted is None:
+def is_transaction_in_month(transaction_date: tuple[int, int, int] | None, target_month: int, target_year: int) -> bool:
+    if transaction_date is None:
         return False
-    return extracted[1] == target_month and extracted[2] == target_year
+    return transaction_date[1] == target_month and transaction_date[2] == target_year
 
 
 def calculate_month_incomes(target_month: int, target_year: int) -> float:
