@@ -379,7 +379,8 @@ def validate_cost_command(command: list[str]) -> str:
         category_name = command[1]
         date_str = command[3]
         amount = get_correct_float(command[2])
-        result = cost_handler(category_name, amount, date_str) if error is None else error
+        if amount is not None:
+            result = cost_handler(category_name, amount, date_str) if error is None else error
 
     return result
 
