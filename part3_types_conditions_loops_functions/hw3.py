@@ -69,15 +69,14 @@ def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
 
     day = int(parts[0])
     month = int(parts[1])
-    year = int(parts[2])
 
     max_days = days_to_months.get(month, 0)
-    if month == FEBRUARY and is_leap_year(year):
+    if month == FEBRUARY and is_leap_year(int(parts[2])):
         max_days = 29
 
-    if not (1 <= day <= max_days and 1 <= month <= MONTHS_IN_YEAR):
-        return None
-    return (day, month, year)
+    if 1 <= day <= max_days and 1 <= month <= MONTHS_IN_YEAR:
+        return (day, month, int(parts[2]))
+    return None
 
 
 def get_correct_float(my_float: str) -> float | None:
@@ -153,9 +152,9 @@ def income_handler(amount: float, income_date: str) -> str:
         return INCORRECT_DATE_MSG
 
     financial_transactions_storage.append({
-        "amount": amount,
-        "date": date_tuple,
-        "income": True
+        _AMOUNT_KEY: amount,
+        _DATE_KEY: date_tuple,
+        _INCOME_KEY: True
     })
     return OP_SUCCESS_MSG
 
@@ -267,8 +266,7 @@ def format_stats_details(category_costs: dict[str, float]) -> str:
         formatted_cost = format_cost_value(cost)
         lines.append(f"{number}. {category}: {formatted_cost}")
 
-    return "\n" + "\n".join(lines) + "\n" if lines else ""
-
+    return "".join(["\n", "\n".join(lines), "\n"])
 
 def get_str_profit_or_loss(profit_loss: float) -> str:
     if profit_loss >= 0:
@@ -281,21 +279,20 @@ def stats_handler(report_date: str) -> str:
     if date_tuple is None:
         return INCORRECT_DATE_MSG
 
-    month_incomes = calculate_month_incomes(date_tuple[1], date_tuple[2])
-    month_costs, category_costs = calculate_month_costs(date_tuple[1], date_tuple[2])
+    month, year = date_tuple[1], date_tuple[2]
+    month_incomes = calculate_month_incomes(month, year)
+    month_costs, category_costs = calculate_month_costs(month, year)
     total_capital = calculate_capital_until_date(report_date)
     profit_loss = month_incomes - month_costs
 
-    lines = [
-        f"Your statistics as of {report_date}:",
-        f"Total capital: {total_capital:.2f} rubles",
-        get_str_profit_or_loss(profit_loss),
-        f"Income: {month_incomes:.2f} rubles",
-        f"Expenses: {month_costs:.2f} rubles",
-        "Details (category: amount):" + format_stats_details(category_costs),
-    ]
-
-    return "\n".join(lines)
+    return "".join([
+        f"Your statistics as of {report_date}:\n",
+        f"Total capital: {total_capital:.2f} rubles\n",
+        f"{get_str_profit_or_loss(profit_loss)}\n",
+        f"Income: {month_incomes:.2f} rubles\n",
+        f"Expenses: {month_costs:.2f} rubles\n",
+        f"Details (category: amount):{format_stats_details(category_costs)}",
+    ])
 
 
 def recognize_command(command: list[str]) -> str:
@@ -310,25 +307,47 @@ def recognize_command(command: list[str]) -> str:
     return income_handler(amount, command[2])
 
 
+def validate_cost_category(category_name: str) -> str | None:
+    if not is_valid_category(category_name):
+        return NOT_EXISTS_CATEGORY
+    return None
+
+
+def validate_cost_amount(amount_str: str) -> tuple[float | None, str | None]:
+    amount = get_correct_float(amount_str)
+    if amount is None or amount <= 0:
+        return amount, NONPOSITIVE_VALUE_MSG
+    return amount, None
+
+
+def validate_cost_date(date_str: str) -> str | None:
+    if extract_date(date_str) is None:
+        return INCORRECT_DATE_MSG
+    return None
+
+
 def validate_cost_command(command: list[str]) -> str:
-    result: str = UNKNOWN_COMMAND_MSG
-
     if len(command) == COST_COMMAND_LENGTH and command[1] == "categories":
-        result = cost_categories_handler()
-    elif len(command) == COST_COMMAND_LENGTH2:
-        category_name = command[1]
-        if not is_valid_category(category_name):
-            result = NOT_EXISTS_CATEGORY
-        else:
-            amount = get_correct_float(command[2])
-            if amount is None or amount <= 0:
-                result = NONPOSITIVE_VALUE_MSG
-            elif extract_date(command[3]) is None:
-                result = INCORRECT_DATE_MSG
-            else:
-                result = cost_handler(category_name, amount, command[3])
+        return cost_categories_handler()
 
-    return result
+    if len(command) != COST_COMMAND_LENGTH2:
+        return UNKNOWN_COMMAND_MSG
+
+    category_name = command[1]
+    error = validate_cost_category(category_name)
+    if error:
+        return error
+
+    amount, error = validate_cost_amount(command[2])
+    if error:
+        return error
+
+    error = validate_cost_date(command[3])
+    if error:
+        return error
+
+    return cost_handler(category_name, amount, command[3])
+
 
 def validate_stats_command(command: list[str]) -> str:
     if len(command) != STATS_COMMAND_LENGTH:
