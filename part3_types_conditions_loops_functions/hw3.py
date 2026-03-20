@@ -122,6 +122,7 @@ def change_capital(capital: float, operation: dict[str, Any]) -> float:
 
 def calculate_capital() -> float:
     capital = 0
+
     for operation in financial_transactions_storage:
         capital = change_capital(capital, operation)
     return capital
