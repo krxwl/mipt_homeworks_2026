@@ -51,6 +51,9 @@ def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
     if len(parts) != 3:
         return None
 
+    if any([not part.isdigit() for part in parts]):
+        return None
+
     max_days = days_to_months.get(int(parts[1]), 0)
     if int(parts[1]) == FEBRUARY and is_leap_year(int(parts[2])):
         max_days = 29
@@ -98,8 +101,8 @@ def get_transaction_amount(transaction: dict[str, Any]) -> float:
     return transaction.get("amount", 0)
 
 
-def get_transaction_date(transaction: dict[str, Any]) -> str:
-    return transaction.get("date", "")
+def get_transaction_date(transaction: dict[str, Any]) -> tuple[int, int, int] | None:
+    return transaction.get("date")
 
 
 def get_transaction_category(transaction: dict[str, Any]) -> str:
@@ -122,19 +125,31 @@ def calculate_capital() -> float:
 
 
 def income_handler(amount: float, income_date: str) -> str:
+    if amount <= 0:
+        return NONPOSITIVE_VALUE_MSG
+    date_tuple = extract_date(income_date)
+    if date_tuple is None:
+        return INCORRECT_DATE_MSG
     financial_transactions_storage.append({
         "amount": amount,
-        "date": income_date,
+        "date": date_tuple,
         "income": True
     })
     return OP_SUCCESS_MSG
 
 
 def cost_handler(category_name: str, amount: float, income_date: str) -> str:
+    if not is_valid_category(category_name):
+        return NOT_EXISTS_CATEGORY
+    if amount <= 0:
+        return NONPOSITIVE_VALUE_MSG
+    date_tuple = extract_date(income_date)
+    if date_tuple is None:
+        return INCORRECT_DATE_MSG
     financial_transactions_storage.append({
         "category": category_name,
         "amount": amount,
-        "date": income_date,
+        "date": date_tuple,
         "income": False
     })
     return OP_SUCCESS_MSG
