@@ -54,8 +54,8 @@ days_to_months = {1: 31,
 
 
 def is_leap_year(year: int) -> bool:
-    condition1 = (year % 4 == 0 and year % 100 != 0)
-    condition2 = (year % 100 == 0 and year % 400 == 0)
+    condition1 = year % 4 == 0 and year % 100 != 0
+    condition2 = year % 100 == 0 and year % 400 == 0
     return condition1 or condition2
 
 
