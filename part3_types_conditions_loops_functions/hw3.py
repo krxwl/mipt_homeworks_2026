@@ -39,11 +39,24 @@ COST_COMMAND_LENGTH = 2
 COST_COMMAND_LENGTH2 = 4
 STATS_COMMAND_LENGTH = 2
 
-days_to_months = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
+days_to_months = {1: 31,
+                  2: 28,
+                  3: 31,
+                  4: 30,
+                  5: 31,
+                  6: 30,
+                  7: 31,
+                  8: 31,
+                  9: 30,
+                  10: 31,
+                  11: 30,
+                  12: 31}
 
 
 def is_leap_year(year: int) -> bool:
-    return (year % 4 == 0 and year % 100 != 0) or (year % 100 == 0 and year % 400 == 0)
+    condition1 = (year % 4 == 0 and year % 100 != 0)
+    condition2 = (year % 100 == 0 and year % 400 == 0)
+    return condition1 or condition2
 
 
 def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
