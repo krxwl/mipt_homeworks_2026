@@ -39,7 +39,8 @@ COST_COMMAND_LENGTH = 2
 COST_COMMAND_LENGTH2 = 4
 STATS_COMMAND_LENGTH = 2
 
-days_to_months = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
+month_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+days_to_months = {i + 1: days for i, days in enumerate(month_days)}
 
 
 def is_leap_year(year: int) -> bool:
