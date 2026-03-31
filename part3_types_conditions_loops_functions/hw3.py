@@ -39,25 +39,11 @@ COST_COMMAND_LENGTH = 2
 COST_COMMAND_LENGTH2 = 4
 STATS_COMMAND_LENGTH = 2
 
-days_to_months = {
-    1: 31,
-    2: 28,
-    3: 31,
-    4: 30,
-    5: 31,
-    6: 30,
-    7: 31,
-    8: 31,
-    9: 30,
-    10: 31,
-    11: 30,
-    12: 31
-}
+days_to_months = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
 
 
 def is_leap_year(year: int) -> bool:
-    return ((year % 4 == 0 and year % 100 != 0) or
-            (year % 100 == 0 and year % 400 == 0))
+    return (year % 4 == 0 and year % 100 != 0) or (year % 100 == 0 and year % 400 == 0)
 
 
 def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
@@ -153,11 +139,7 @@ def income_handler(amount: float, income_date: str) -> str:
         financial_transactions_storage.append({})
         return INCORRECT_DATE_MSG
 
-    financial_transactions_storage.append({
-        _AMOUNT_KEY: amount,
-        _DATE_KEY: date_tuple,
-        _INCOME_KEY: True
-    })
+    financial_transactions_storage.append({_AMOUNT_KEY: amount, _DATE_KEY: date_tuple, _INCOME_KEY: True})
     return OP_SUCCESS_MSG
 
 
@@ -175,12 +157,9 @@ def cost_handler(category_name: str, amount: float, income_date: str) -> str:
         financial_transactions_storage.append({})
         return INCORRECT_DATE_MSG
 
-    financial_transactions_storage.append({
-        "category": category_name,
-        "amount": amount,
-        "date": date_tuple,
-        "income": False
-    })
+    financial_transactions_storage.append(
+        {"category": category_name, "amount": amount, "date": date_tuple, "income": False}
+    )
     return OP_SUCCESS_MSG
 
 
@@ -285,14 +264,16 @@ def stats_handler(report_date: str) -> str:
     month_incomes = calculate_month_incomes(date_tuple[1], date_tuple[2])
     month_costs, category_costs = calculate_month_costs(date_tuple[1], date_tuple[2])
 
-    return "".join([
-        f"Your statistics as of {report_date}:\n",
-        f"Total capital: {calculate_capital_until_date(report_date):.2f} rubles\n",
-        f"{get_str_profit_or_loss(month_incomes - month_costs)}\n",
-        f"Income: {month_incomes:.2f} rubles\n",
-        f"Expenses: {month_costs:.2f} rubles\n",
-        f"Details (category: amount):{format_stats_details(category_costs)}",
-    ])
+    return "".join(
+        [
+            f"Your statistics as of {report_date}:\n",
+            f"Total capital: {calculate_capital_until_date(report_date):.2f} rubles\n",
+            f"{get_str_profit_or_loss(month_incomes - month_costs)}\n",
+            f"Income: {month_incomes:.2f} rubles\n",
+            f"Expenses: {month_costs:.2f} rubles\n",
+            f"Details (category: amount):{format_stats_details(category_costs)}",
+        ]
+    )
 
 
 def recognize_command(command: list[str]) -> str:
