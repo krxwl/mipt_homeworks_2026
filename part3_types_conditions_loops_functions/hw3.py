@@ -39,7 +39,9 @@ COST_COMMAND_LENGTH = 2
 COST_COMMAND_LENGTH2 = 4
 STATS_COMMAND_LENGTH = 2
 
-month_days = [31, 28] + [31, 30] * 2 + [31, 31, 30, 31, 30, 31]
+FIRST_HALF = [31, 28, 31, 30, 31, 30]
+SECOND_HALF = [31, 31, 30, 31, 30, 31]
+month_days = FIRST_HALF + SECOND_HALF
 days_to_months = {i + 1: days for i, days in enumerate(month_days)}
 
 
