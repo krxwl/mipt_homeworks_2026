@@ -19,7 +19,7 @@ class DictStorage(Storage[K, V]):
         return self._data.get(key)
 
     def exists(self, key: K) -> bool:
-        return key in self._data.keys()
+        return key in self._data
 
     def remove(self, key: K) -> None:
         del self._data[key]
@@ -91,7 +91,7 @@ class LFUPolicy(Policy[K]):
 
     def get_key_to_evict(self) -> K | None:
         if len(self._key_counter) > self.capacity:
-            return min(self._key_counter, key=self._key_counter.get)
+            return min(self._key_counter, key=lambda k: self._key_counter[k])
         return None
 
     def remove_key(self, key: K) -> None:
@@ -108,34 +108,34 @@ class LFUPolicy(Policy[K]):
 
 class MIPTCache(Cache[K, V]):
     def __init__(self, storage: Storage[K, V], policy: Policy[K]) -> None:
-        self.storage = storage
-        self.policy = policy
+        self._storage = storage
+        self._policy = policy
 
     def set(self, key: K, value: V) -> None:
-        self.storage.set(key, value)
-        self.policy.register_access(key)
+        self._storage.set(key, value)
+        self._policy.register_access(key)
 
-        evict_key = self.policy.get_key_to_evict()
+        evict_key = self._policy.get_key_to_evict()
         if evict_key is not None:
-            self.storage.remove(evict_key)
-            self.policy.remove_key(evict_key)
+            self._storage.remove(evict_key)
+            self._policy.remove_key(evict_key)
 
     def get(self, key: K) -> V | None:
-        value = self.storage.get(key)
+        value = self._storage.get(key)
         if value is not None:
-            self.policy.register_access(key)
+            self._policy.register_access(key)
         return value
 
     def exists(self, key: K) -> bool:
-        return self.storage.exists(key)
+        return self._storage.exists(key)
 
     def remove(self, key: K) -> None:
-        self.storage.remove(key)
-        self.policy.remove_key(key)
+        self._storage.remove(key)
+        self._policy.remove_key(key)
 
     def clear(self) -> None:
-        self.storage.clear()
-        self.policy.clear()
+        self._storage.clear()
+        self._policy.clear()
 
 
 class CachedProperty[V]:
@@ -146,11 +146,11 @@ class CachedProperty[V]:
     def __get__(self, instance: HasCache[Any, Any] | None, owner: type) -> V:
         if instance is None:
             return self
-
-        if instance.cache.exists(self.func_name):
-            return instance.cache.get(self.func_name)
+        value = instance.cache.get(self.func_name)
+        if value is not None:
+            return value
 
         result = self.func(instance)
-
         instance.cache.set(self.func_name, result)
+
         return result
