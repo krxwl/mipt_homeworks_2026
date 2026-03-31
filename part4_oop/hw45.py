@@ -93,7 +93,8 @@ class LFUPolicy(Policy[K]):
         if len(self._key_counter) <= self.capacity:
             return None
 
-        min_count = min(self._key_counter.values())
+        items = list(self._key_counter.items())
+        min_count = min(count for _, count in items[:-1])
 
         for key, count in self._key_counter.items():
             if count == min_count:
