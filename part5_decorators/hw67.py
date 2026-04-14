@@ -22,7 +22,7 @@ class CallableWithMeta(Protocol[P, R_co]):
 
 
 class BreakerError(Exception):
-    def __init__(self, func_name: str, block_time: str):
+    def __init__(self, func_name: str, block_time: datetime):
         super().__init__(TOO_MUCH)
         self.func_name = func_name
         self.block_time = block_time
@@ -63,7 +63,7 @@ class CircuitBreaker:
                 if diff < self.time_to_recover:
                     raise BreakerError(
                         full_name,
-                        self._last_fail_time.strftime("%Y-%m-%d %H:%M:%S")
+                        self._last_fail_time
                     )
                 else:
                     self._last_fail_time = None
@@ -79,11 +79,10 @@ class CircuitBreaker:
 
                 if self._fail_count >= self.critical_count:
                     self._last_fail_time = datetime.now(UTC)
-                    formatted_time = self._last_fail_time.strftime("%Y-%m-%d %H:%M:%S")
 
                     raise BreakerError(
-                        func_name=full_name,
-                        block_time=formatted_time
+                        full_name,
+                        self._last_fail_time
                     ) from exception
 
                 raise exception
