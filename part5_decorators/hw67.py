@@ -51,31 +51,35 @@ class CircuitBreaker:
         self._fail_count = 0
         self._last_fail_time: datetime | None = None
 
+    def _check_recovery(self, full_name: str) -> None:
+        if not self._last_fail_time:
+            return
+        now = datetime.now(UTC)
+        if (now - self._last_fail_time).total_seconds() < self.time_to_recover:
+            raise BreakerError(full_name, self._last_fail_time)
+
+        self._last_fail_time = None
+        self._fail_count = 0
+
+    def _handle_failure(self, full_name: str, exception: Exception) -> None:
+        self._fail_count += 1
+
+        if self._fail_count >= self.critical_count:
+            self._last_fail_time = datetime.now(UTC)
+            raise BreakerError(func_name=full_name, block_time=self._last_fail_time) from exception
+        raise exception
+
     def __call__(self, func: CallableWithMeta[P, R_co]) -> CallableWithMeta[P, R_co]:
         full_name = f"{func.__module__}.{func.__name__}"
 
         @functools.wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R_co:
-            if self._last_fail_time:
-                now = datetime.now(UTC)
-                diff = (now - self._last_fail_time).total_seconds()
+            self._check_recovery(full_name)
 
-                if diff < self.time_to_recover:
-                    raise BreakerError(full_name, self._last_fail_time)
-
-                self._last_fail_time = None
-                self._fail_count = 0
             try:
                 result = func(*args, **kwargs)
             except self.triggers_on as exception:
-                self._fail_count += 1
-
-                if self._fail_count >= self.critical_count:
-                    self._last_fail_time = datetime.now(UTC)
-
-                    raise BreakerError(full_name, self._last_fail_time) from exception
-
-                raise
+                self._handle_failure(full_name, exception)
             else:
                 self._fail_count = 0
                 return result
