@@ -65,15 +65,11 @@ class CircuitBreaker:
                         full_name,
                         self._last_fail_time
                     )
-                else:
-                    self._last_fail_time = None
-                    self._fail_count = 0
 
+                self._last_fail_time = None
+                self._fail_count = 0
             try:
                 result = func(*args, **kwargs)
-                self._fail_count = 0
-                return result
-
             except self.triggers_on as exception:
                 self._fail_count += 1
 
@@ -85,8 +81,10 @@ class CircuitBreaker:
                         self._last_fail_time
                     ) from exception
 
-                raise exception
-
+                raise
+            else:
+                self._fail_count = 0
+                return result
         return wrapper
 
 
