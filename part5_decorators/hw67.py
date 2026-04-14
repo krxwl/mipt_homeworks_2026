@@ -61,10 +61,7 @@ class CircuitBreaker:
                 diff = (now - self._last_fail_time).total_seconds()
 
                 if diff < self.time_to_recover:
-                    raise BreakerError(
-                        full_name,
-                        self._last_fail_time
-                    )
+                    raise BreakerError(full_name, self._last_fail_time)
 
                 self._last_fail_time = None
                 self._fail_count = 0
@@ -76,15 +73,13 @@ class CircuitBreaker:
                 if self._fail_count >= self.critical_count:
                     self._last_fail_time = datetime.now(UTC)
 
-                    raise BreakerError(
-                        full_name,
-                        self._last_fail_time
-                    ) from exception
+                    raise BreakerError(full_name, self._last_fail_time) from exception
 
                 raise
             else:
                 self._fail_count = 0
                 return result
+
         return wrapper
 
 
