@@ -51,6 +51,23 @@ class CircuitBreaker:
         self._fail_count = 0
         self._last_fail_time: datetime | None = None
 
+    def __call__(self, func: CallableWithMeta[P, R_co]) -> CallableWithMeta[P, R_co]:
+        full_name = f"{func.__module__}.{func.__name__}"
+
+        @functools.wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R_co:
+            self._check_recovery(full_name)
+
+            try:
+                result = func(*args, **kwargs)
+            except self.triggers_on as exception:
+                self._handle_failure(full_name, exception)
+            else:
+                self._fail_count = 0
+                return result
+
+        return wrapper
+
     def _check_recovery(self, full_name: str) -> None:
         if not self._last_fail_time:
             return
@@ -68,23 +85,6 @@ class CircuitBreaker:
             self._last_fail_time = datetime.now(UTC)
             raise BreakerError(func_name=full_name, block_time=self._last_fail_time) from exception
         raise exception
-
-    def __call__(self, func: CallableWithMeta[P, R_co]) -> CallableWithMeta[P, R_co]:
-        full_name = f"{func.__module__}.{func.__name__}"
-
-        @functools.wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R_co:
-            self._check_recovery(full_name)
-
-            try:
-                result = func(*args, **kwargs)
-            except self.triggers_on as exception:
-                self._handle_failure(full_name, exception)
-            else:
-                self._fail_count = 0
-                return result
-
-        return wrapper
 
 
 circuit_breaker = CircuitBreaker(5, 30, Exception)
