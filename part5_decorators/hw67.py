@@ -31,9 +31,9 @@ class BreakerError(Exception):
 class CircuitBreaker:
     def __init__(
         self,
-        critical_count: int,
-        time_to_recover: int,
-        triggers_on: type[Exception],
+        critical_count: int = 5,
+        time_to_recover: int = 30,
+        triggers_on: type[Exception] = Exception,
     ):
         errors = []
         if not isinstance(critical_count, int) or critical_count <= 0:
