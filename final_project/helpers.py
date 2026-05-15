@@ -1,6 +1,7 @@
 import os
 from settings import Colors
 
+
 def clear_screen() -> None:
     """очистка консоли"""
     os.system('cls' if os.name == 'nt' else 'clear')
