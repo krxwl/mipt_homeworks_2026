@@ -24,14 +24,19 @@ def fill_config(config: dict[str, Any], res: dict[str, Any]) -> None:
     res['limit_message'] = raw_limit_message or None
 
     env_chars_raw: str | None = os.environ.get('LIMIT_CHARS')
-    raw_limit_chars = int(env_chars_raw if env_chars_raw is not None else config.get('limit_chars') or 0)
+    raw_limit_chars = int(
+        env_chars_raw if env_chars_raw is not None else config.get('limit_chars') or 0
+    )
     res['limit_chars'] = raw_limit_chars or None
 
     env_temperature_raw: str | None = os.environ.get('TEMPERATURE')
-    raw_temperature = float(env_temperature_raw if env_temperature_raw is not None else config.get('temperature', 0.7))
+    raw_temperature = float(
+        env_temperature_raw if env_temperature_raw is not None else config.get('temperature', 0.7)
+    )
     res['temperature'] = raw_temperature
 
     res['system_prompt'] = config.get('system_prompt')
+
 
 def crop_if_limit_exceeded(new_text: str, limit_chars: int | None) -> None:
     if limit_chars and len(new_text) > limit_chars:
