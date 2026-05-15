@@ -1,0 +1,6 @@
+[tool.uv]
+override-dependencies = [
+    "mypy>=1.0.0",
+    "openai",
+    "types-PyYAML",
+]
