@@ -4,6 +4,7 @@ import re
 import yaml
 from typing import Any
 from openai import OpenAI
+from itertools import batched
 
 import settings
 from services import clear_screen, print_colored, get_file_content
@@ -18,11 +19,11 @@ def get_yaml_configuration() -> dict[str, Any]:
 
 
 def fill_config(config: dict[str, Any], res: dict[str, Any]) -> None:
-    env_limit_message: int = os.environ.get('LIMIT_MESSAGE')
+    env_limit_message: str | None = os.environ.get('LIMIT_MESSAGE')
     raw_limit_message = int(env_limit_message or config.get('limit_message') or 0)
     res['limit_message'] = raw_limit_message or None
 
-    env_chars: int = int(os.environ.get('LIMIT_CHARS'))
+    env_chars: str | None = int(os.environ.get('LIMIT_CHARS'))
     raw_limit_chars = int(env_chars or config.get('limit_chars') or 0)
     res['limit_chars'] = raw_limit_chars or None
 
@@ -60,13 +61,13 @@ def prepare_chunks(content: str, chunk_type: str, chunk_value: int) -> list[str]
         paragraphs: list[str] = re.split('\n\n', content)
         paragraphs = [p for p in paragraphs if p.strip()]
         return [
-            '\n'.join(paragraphs[i : i + chunk_value])
-            for i in range(0, len(paragraphs), chunk_value)
+            '\n'.join(batch)
+            for batch in batched(paragraphs, chunk_value)
         ]
     else:
         chunks: list[str] = []
-        for i in range(0, len(content), chunk_value):
-            chunks.append(content[i : i + chunk_value])
+        for batch in batched(content, chunk_value):
+            chunks.append(''.join(batch))
         return chunks
 
 
@@ -89,7 +90,7 @@ def interrupt_chunks_processing(auto_yes: bool) -> bool:
     if auto_yes:
         return False
 
-    print_colored(settings.INSTRUCTIONS_STR, settings.Colors.BLUE)
+    print_colored(settings.INSTRUCTIONS_STR, settings.Colors.blue)
     return input().strip() == settings.QUIT_COMMAND
 
 
@@ -311,8 +312,8 @@ class AIAgent:
     def run(self) -> None:
         """основной цикл приложения"""
         while True:
-            print(settings.GREETING_COMMANDS_TEXT, settings.Colors.BLUE)
-            print_colored(settings.GET_COMMAND_INPUT_TEXT, settings.Colors.BLUE)
+            print(settings.GREETING_COMMANDS_TEXT, settings.Colors.blue)
+            print_colored(settings.GET_COMMAND_INPUT_TEXT, settings.Colors.blue)
             user_input = input()
             command = user_input.strip()
 
