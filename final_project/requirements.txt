@@ -1,2 +1,3 @@
-openai==1.14.0
-PyYAML==6.0.1
+openai
+PyYAML
+types-PyYAML
