@@ -57,13 +57,13 @@ def prepare_chunks(content: str, chunk_type: str, chunk_value: int) -> list[str]
         paragraphs: list[str] = re.split('\n\n', content)
         paragraphs = [p for p in paragraphs if p.strip()]
         return [
-            '\n'.join(paragraphs[i : i + chunk_value])
+            '\n'.join(paragraphs[i: i + chunk_value])
             for i in range(0, len(paragraphs), chunk_value)
         ]
     else:
         chunks: list[str] = []
         for i in range(0, len(content), chunk_value):
-            chunks.append(content[i : i + chunk_value])
+            chunks.append(content[i: i + chunk_value])
         return chunks
 
 
@@ -123,6 +123,62 @@ def process_response(response: Any) -> str:
     return ''.join(reply)
 
 
+def process_single_command(agent: 'AIAgent', command: str) -> bool:
+    """обрабатывает одну команду возвращает False если цикл приложения нужно завершить"""
+    if command.startswith(('/', settings.QUIT_COMMAND)):
+        return agent.handle_command(command)
+
+    processed_text = agent.process_inline_files(command)
+    agent.follow_context_limits(processed_text)
+    agent.print_reply(agent.get_llm_response(agent.prepare_api_messages()))
+    return True
+
+
+def delete_exceeded_limit_messages(history: list[dict[str, str]], limit: int | None) -> None:
+    """удаляет старые сообщения если превышен лимит на их количество"""
+    if limit:
+        while len(history) > limit:
+            history.pop(0)
+
+
+def delete_exceeded_char_messages(history: list[dict[str, str]], limit_chars: int | None) -> None:
+    """удаляет старые сообщения если суммарное количество символов превышает лимит"""
+    if limit_chars:
+        while sum(len(msg['content']) for msg in history) > limit_chars:
+            if len(history) <= 1:
+                break
+            history.pop(0)
+
+
+def load_config() -> dict[str, Any]:
+    """загрузка конфигурации из yaml и переменных окружения"""
+    config: dict[str, Any] = get_yaml_configuration()
+
+    res: dict[str, Any] = {
+        settings.API_KEY_STR: os.environ.get('API_KEY', config.get('api_key')),
+        settings.API_HOST_STR: os.environ.get('API_HOST', config.get('api_host')),
+    }
+
+    if not res[settings.API_KEY_STR] and not res[settings.API_HOST_STR]:
+        print_colored(settings.ERROR_API_KEY_API_HOST_MISSING, settings.Colors.red)
+        print_colored(settings.ERROR_ENV_VARIABLES_YUML_MISSING, settings.Colors.red)
+        sys.exit(1)
+
+    fill_config(config, res)
+
+    return res
+
+
+def print_reply(agent: 'AIAgent', reply: str | None) -> None:
+    if reply:
+        print_colored(f'{reply}\n', settings.Colors.cyan)
+        agent.history.append(
+            {settings.ROLE_KEY: settings.LLM_ROLE_STR, settings.CONTENT_KEY: reply}
+        )
+    elif agent.history:
+        agent.history.pop()
+
+
 class AIAgent:
     def __init__(self) -> None:
         self.config: dict[str, Any] = self.load_config()
@@ -133,33 +189,6 @@ class AIAgent:
         self.client = OpenAI(base_url=api_host, api_key=api_key)
         self.history: list[dict[str, str]] = []
         self.system_prompt: str | None = self.config.get('system_prompt')
-
-    def load_config(self) -> dict[str, Any]:
-        """загрузка конфигурации из yaml и переменных окружения"""
-        config: dict[str, Any] = get_yaml_configuration()
-
-        res: dict[str, Any] = {
-            settings.API_KEY_STR: os.environ.get('API_KEY', config.get('api_key')),
-            settings.API_HOST_STR: os.environ.get('API_HOST', config.get('api_host')),
-        }
-
-        if not res[settings.API_KEY_STR] and not res[settings.API_HOST_STR]:
-            print_colored(settings.ERROR_API_KEY_API_HOST_MISSING, settings.Colors.red)
-            print_colored(settings.ERROR_ENV_VARIABLES_YUML_MISSING, settings.Colors.red)
-            sys.exit(1)
-
-        fill_config(config, res)
-
-        return res
-
-    def print_reply(self, reply: str | None) -> None:
-        if reply:
-            print_colored(f'{reply}\n', settings.Colors.cyan)
-            self.history.append(
-                {settings.ROLE_KEY: settings.LLM_ROLE_STR, settings.CONTENT_KEY: reply}
-            )
-        elif self.history:
-            self.history.pop()
 
     def prepare_api_messages(self) -> list[dict[str, str]]:
         api_messages = []
@@ -202,16 +231,8 @@ class AIAgent:
         self.history.append(
             {settings.ROLE_KEY: settings.USER_ROLE_STR, settings.CONTENT_KEY: new_text}
         )
-
-        if limit_message:
-            while len(self.history) > limit_message:
-                self.history.pop(0)
-
-        if limit_chars:
-            while sum(len(msg['content']) for msg in self.history) > limit_chars:
-                if len(self.history) <= 1:
-                    break
-                self.history.pop(0)
+        delete_exceeded_limit_messages(self.history, limit_message)
+        delete_exceeded_char_messages(self.history, limit_chars)
 
     def process_inline_files(self, text: str) -> str:
         """находит файлы в формате @::filepath:: и заменяет их содержимым"""
@@ -223,8 +244,7 @@ class AIAgent:
                 continue
 
             try:
-                content = get_file_content(correct_path)
-                text = text.replace(f'@::{path}::', f'\n{content}\n')
+                text = text.replace(f'@::{path}::', f'\n{get_file_content(correct_path)}\n')
             except Exception as e:
                 print_colored(
                     f'\n{settings.FILE_READING_ERROR} {correct_path}: {e}', settings.Colors.yellow
@@ -294,14 +314,8 @@ class AIAgent:
             if not command:
                 continue
 
-            if command.startswith(('/', settings.QUIT_COMMAND)):
-                if not self.handle_command(command):
-                    break
-                continue
-
-            processed_text = self.process_inline_files(command)
-            self.follow_context_limits(processed_text)
-            self.print_reply(self.get_llm_response(self.prepare_api_messages()))
+            if not process_single_command(self, command):
+                break
 
 
 if __name__ == '__main__':

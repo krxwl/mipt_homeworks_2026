@@ -14,9 +14,16 @@ PROCESS_PROMPT_TEXT: str = '\nНачинаю обработку промпта\n
 PROCESS_PROMPT_ENDED_TEXT: str = '\nОбработка файла завершена\n'
 GET_COMMAND_INPUT_TEXT: str = '\n\nВведите команду:\n'
 CONTEXT_CLEARED_TEXT: str = '\nКонтекст очищен\n'
-GREETING_COMMANDS_TEXT: str = "Команды:\n'\\\\q' - выход из приложения\n'/reset' - очищает контекст"
+GREETING_COMMANDS_TEXT: str = (
+    'Команды:\n'
+    r"'\q' - выход из приложения"
+    '\n/reset - очищает контекст'
+)
 LLM_AUTHOR_STR: str = '\nLLM: '
-INSTRUCTIONS_STR: str = '\nнажмите enter для продолжения, \\\\q для выхода'
+INSTRUCTIONS_STR: str = (
+    '\nнажмите enter для продолжения, '
+    r'\q для выхода'
+)
 
 SYSTEM_ROLE_STR: str = 'system'
 USER_ROLE_STR: str = 'user'
