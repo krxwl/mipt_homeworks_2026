@@ -14,7 +14,7 @@ class AIAgent:
         """загрузка конфигурации из yaml и переменных окружения"""
         config: dict[str, Any] = self.get_yaml_configuration()
 
-        res: dict = {
+        res: dict[str, Any] = {
             'api_key': os.environ.get('API_KEY', config.get('api_key')),
             'api_host': os.environ.get('API_HOST', config.get('api_host')),
         }
@@ -29,10 +29,10 @@ class AIAgent:
         return res
 
     def __init__(self) -> None:
-        self.config = self.load_config()
+        self.config: dict[str, Any] = self.load_config()
         self.client = OpenAI(base_url=self.config['api_host'], api_key=self.config['api_key'])
-        self.history = []
-        self.system_prompt = self.config.get('system_prompt')
+        self.history: list[dict[str, str]] = []
+        self.system_prompt: str | None = self.config.get('system_prompt')
 
     # хэлперы
     def print_reply(self, reply: str | None) -> None:
@@ -51,13 +51,13 @@ class AIAgent:
         return api_messages
 
     def get_yaml_configuration(self) -> dict[str, Any]:
-        config = {}
+        config: dict[str, Any] = {}
         if os.path.exists(settings.YAML_FILENAME):
             with open(settings.YAML_FILENAME, 'r', encoding='utf-8') as file:
                 config = yaml.safe_load(file) or {}
         return config
 
-    def fill_config(self, config: dict[str, Any], res: dict) -> None:
+    def fill_config(self, config: dict[str, Any], res: dict[str, Any]) -> None:
         res['model'] = os.environ.get('MODEL_NAME', config.get('model'))
 
         res['limit_message'] = (
@@ -70,7 +70,7 @@ class AIAgent:
         res['temperature'] = float(os.environ.get('TEMPERATURE') or config.get('temperature', 0.7))
         res['system_prompt'] = config.get('system_prompt')
 
-    def crop_if_limit_exceeded(self, new_text: str, limit_chars: int) -> None:
+    def crop_if_limit_exceeded(self, new_text: str, limit_chars: int | None) -> None:
         if limit_chars and len(new_text) > limit_chars:
             new_text = new_text[-limit_chars:]
 
@@ -189,7 +189,7 @@ class AIAgent:
 
         return text
 
-    def get_llm_response(self, messages) -> str | None:
+    def get_llm_response(self, messages: list[dict[str, str]]) -> str | None:
         """отправка запроса к модели"""
         try:
             response = self.client.chat.completions.create(
