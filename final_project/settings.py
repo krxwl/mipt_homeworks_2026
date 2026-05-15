@@ -30,6 +30,7 @@ QUIT_COMMAND: str = r'\q'
 PARAGRAPH_CHUNK_TYPE: str = 'paragraph'
 CHARS_CHUNK_TYPE: str = 'len'
 
+
 # enum для цветного текста в консоли
 class Colors:
     RESET = '\033[0m'

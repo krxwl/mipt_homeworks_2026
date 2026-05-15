@@ -8,13 +8,29 @@ from openai import OpenAI
 import settings
 from utils import clear_screen, print_colored, get_file_content
 
+
 class AIAgent:
-    def __init__(self):
+    def load_config(self) -> dict[str, Any]:
+        """загрузка конфигурации из yaml и переменных окружения"""
+        config: dict[str, Any] = self.get_yaml_configuration()
+
+        res: dict = {
+            'api_key': os.environ.get('API_KEY', config.get('api_key')),
+            'api_host': os.environ.get('API_HOST', config.get('api_host')),
+        }
+
+        if not res['api_key'] and not res['api_host']:
+            print_colored(settings.ERROR_API_KEY_API_HOST_MISSING, settings.Colors.RED)
+            print_colored(settings.ERROR_ENV_VARIABLES_YUML_MISSING, settings.Colors.RED)
+            sys.exit(1)
+
+        self.fill_config(config, res)
+
+        return res
+
+    def __init__(self) -> None:
         self.config = self.load_config()
-        self.client = OpenAI(
-            base_url=self.config['api_host'],
-            api_key=self.config['api_key']
-        )
+        self.client = OpenAI(base_url=self.config['api_host'], api_key=self.config['api_key'])
         self.history = []
         self.system_prompt = self.config.get('system_prompt')
 
@@ -27,14 +43,12 @@ class AIAgent:
             if self.history:
                 self.history.pop()
 
-
     def prepare_api_messages(self) -> list[dict[str, str]]:
         api_messages = []
         if self.system_prompt:
             api_messages.append({'role': settings.SYSTEM_ROLE_STR, 'content': self.system_prompt})
         api_messages.extend(self.history)
         return api_messages
-
 
     def get_yaml_configuration(self) -> dict[str, Any]:
         config = {}
@@ -43,23 +57,22 @@ class AIAgent:
                 config = yaml.safe_load(file) or {}
         return config
 
-
     def fill_config(self, config: dict[str, Any], res: dict) -> None:
         res['model'] = os.environ.get('MODEL_NAME', config.get('model'))
 
-        res['limit_message'] = (int(os.environ.get('LIMIT_MESSAGE') or config.get('limit_message')
-                                    or 0) or None)
-        res['limit_chars'] = int(os.environ.get('LIMIT_CHARS') or config.get('limit_chars')
-                                 or 0) or None
+        res['limit_message'] = (
+            int(os.environ.get('LIMIT_MESSAGE') or config.get('limit_message') or 0) or None
+        )
+        res['limit_chars'] = (
+            int(os.environ.get('LIMIT_CHARS') or config.get('limit_chars') or 0) or None
+        )
 
         res['temperature'] = float(os.environ.get('TEMPERATURE') or config.get('temperature', 0.7))
         res['system_prompt'] = config.get('system_prompt')
 
-
     def crop_if_limit_exceeded(self, new_text: str, limit_chars: int) -> None:
         if limit_chars and len(new_text) > limit_chars:
             new_text = new_text[-limit_chars:]
-
 
     def parse_chunk_args(self, command: str) -> tuple[str, int, bool]:
         """парсит аргументы команды /file_chunk"""
@@ -77,18 +90,18 @@ class AIAgent:
 
         return chunk_type, chunk_value, '-y' in args
 
-
     def prepare_chunks(self, content: str, chunk_type: str, chunk_value: int) -> list[str]:
         """разбивает текст на куски в зависимости от типа"""
 
         if chunk_type == settings.PARAGRAPH_CHUNK_TYPE:
             paragraphs: list[str] = re.split('\n\n', content)
             paragraphs = [p for p in paragraphs if p.strip()]
-            return ['\n'.join(paragraphs[i: i + chunk_value])
-                    for i in range(0, len(paragraphs), chunk_value)]
+            return [
+                '\n'.join(paragraphs[i : i + chunk_value])
+                for i in range(0, len(paragraphs), chunk_value)
+            ]
         else:
-            return [content[i:i + chunk_value] for i in range(0, len(content), chunk_value)]
-
+            return [content[i : i + chunk_value] for i in range(0, len(content), chunk_value)]
 
     def request_chunk_inputs(self) -> tuple[str, str] | None:
         """запрашивает у пользователя путь к файлу и промпт"""
@@ -104,15 +117,15 @@ class AIAgent:
         user_prompt: str = input()
         return filepath, user_prompt
 
-
     def execute_chunk_processing(self, chunks: list[str], user_prompt: str, auto_yes: bool) -> None:
         """отправляет чанки в LLM и обрабатывает паузы пользователя"""
         for chunk in chunks:
             if not chunk.strip():
                 continue
 
-            messages: list[dict[str, str]] = [{'role': settings.USER_ROLE_STR, 'content':
-                                               f'{user_prompt}\n\n{chunk}'}]
+            messages: list[dict[str, str]] = [
+                {'role': settings.USER_ROLE_STR, 'content': f'{user_prompt}\n\n{chunk}'}
+            ]
             print_colored(settings.LLM_AUTHOR_STR, settings.Colors.CYAN)
             self.get_llm_response(messages)
 
@@ -133,27 +146,7 @@ class AIAgent:
             return True
         return False
 
-    # основной функционал
-    def load_config(self):
-        """загрузка конфигурации из yaml и переменных окружения"""
-        config: dict[str, Any] = self.get_yaml_configuration()
-
-        res: dict = {
-            'api_key': os.environ.get('API_KEY', config.get('api_key')),
-            'api_host': os.environ.get('API_HOST', config.get('api_host'))
-        }
-
-        if not res['api_key'] and not res['api_host']:
-            print_colored(settings.ERROR_API_KEY_API_HOST_MISSING, settings.Colors.RED)
-            print_colored(settings.ERROR_ENV_VARIABLES_YUML_MISSING, settings.Colors.RED)
-            sys.exit(1)
-
-        self.fill_config(config, res)
-
-        return res
-
-
-    def follow_context_limits(self, new_text):
+    def follow_context_limits(self, new_text: str) -> None:
         """обрезает соообщения и удаляет старые"""
         limit_chars = self.config['limit_chars']
         limit_message = self.config['limit_message']
@@ -162,8 +155,9 @@ class AIAgent:
         self.history.append({'role': settings.USER_ROLE_STR, 'content': new_text})
 
         while True:
-            chars_limit_exceeded = limit_chars and sum(len(msg['content'])
-                                                       for msg in self.history) > limit_chars
+            chars_limit_exceeded = (
+                limit_chars and sum(len(msg['content']) for msg in self.history) > limit_chars
+            )
             msgs_limit_exceeded = limit_message and len(self.history) > limit_message
 
             if not chars_limit_exceeded and not msgs_limit_exceeded:
@@ -174,28 +168,28 @@ class AIAgent:
             else:
                 break
 
-
-    def process_inline_files(self, text: str):
+    def process_inline_files(self, text: str) -> str:
         """находит файлы в формате @::filepath:: и заменяет их содержимым"""
         files_paths = re.findall(r'@::(.*?)::', text)
 
         for path in files_paths:
             correct_path = path.strip()
-            if (self.process_file_not_found(correct_path) or 
-                self.process_exceeding_file_limit(correct_path)):
+            if self.process_file_not_found(correct_path) or self.process_exceeding_file_limit(
+                correct_path
+            ):
                 continue
 
             try:
                 content = get_file_content(correct_path)
                 text = text.replace(f'@::{path}::', f'\n{content}\n')
             except Exception as e:
-                print_colored(f'\n{settings.FILE_READING_ERROR} {correct_path}: {e}',
-                              settings.Colors.YELLOW)
+                print_colored(
+                    f'\n{settings.FILE_READING_ERROR} {correct_path}: {e}', settings.Colors.YELLOW
+                )
 
         return text
 
-
-    def get_llm_response(self, messages):
+    def get_llm_response(self, messages) -> str | None:
         """отправка запроса к модели"""
         try:
             response = self.client.chat.completions.create(
@@ -222,8 +216,7 @@ class AIAgent:
             print_colored(f'{settings.API_ERROR} {e}', settings.Colors.YELLOW)
             return None
 
-
-    def chunk_mode(self, command):
+    def chunk_mode(self, command: str) -> None:
         chunk_type, chunk_value, auto_yes = self.parse_chunk_args(command)
 
         inputs = self.request_chunk_inputs()
@@ -234,12 +227,12 @@ class AIAgent:
 
         content = get_file_content(inputs[0])
 
-        self.execute_chunk_processing(self.prepare_chunks(content, chunk_type, chunk_value),
-                                      inputs[1], auto_yes)
+        self.execute_chunk_processing(
+            self.prepare_chunks(content, chunk_type, chunk_value), inputs[1], auto_yes
+        )
         print_colored(settings.PROCESS_PROMPT_ENDED_TEXT, settings.Colors.GREEN)
 
-
-    def run(self):
+    def run(self) -> None:
         """основной цикл приложения"""
         while True:
             print(settings.GREETING_COMMANDS_TEXT, settings.Colors.BLUE)
