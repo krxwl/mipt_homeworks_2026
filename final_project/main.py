@@ -1,9 +1,9 @@
 import os
 import sys
 import re
-import yaml
+import yaml  # type: ignore
 from typing import Any
-from openai import OpenAI
+from openai import OpenAI  # type: ignore
 from itertools import batched
 
 import settings
