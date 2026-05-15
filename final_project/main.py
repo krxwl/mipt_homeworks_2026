@@ -66,7 +66,7 @@ def prepare_chunks(content: str, chunk_type: str, chunk_value: int) -> list[str]
     else:
         chunks: list[str] = []
         for i in range(0, len(content), chunk_value):
-            chunks.append(content[i: i + chunk_value])
+            chunks.append(content[i : i + chunk_value])
         return chunks
 
 
