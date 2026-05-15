@@ -20,13 +20,9 @@ def get_yaml_configuration() -> dict[str, Any]:
 def fill_config(config: dict[str, Any], res: dict[str, Any]) -> None:
     res['model'] = os.environ.get('MODEL_NAME', config.get('model'))
     env_limit_message: int = os.environ.get('LIMIT_MESSAGE')
-    res['limit_message'] = (
-        int(env_limit_message or config.get('limit_message') or 0) or None
-    )
+    res['limit_message'] = int(env_limit_message or config.get('limit_message') or 0) or None
     env_chars: int = int(os.environ.get('LIMIT_CHARS'))
-    res['limit_chars'] = (
-        int(env_chars or config.get('limit_chars') or 0) or None
-    )
+    res['limit_chars'] = int(env_chars or config.get('limit_chars') or 0) or None
     env_temperature: float = float(os.environ.get('TEMPERATURE'))
     res['temperature'] = float(env_temperature or config.get('temperature', 0.7))
     res['system_prompt'] = config.get('system_prompt')
@@ -159,16 +155,21 @@ class AIAgent:
     def print_reply(self, reply: str | None) -> None:
         if reply:
             print_colored(f'{reply}\n', settings.Colors.cyan)
-            self.history.append({settings.ROLE_KEY: settings.LLM_ROLE_STR,
-                                 settings.CONTENT_KEY: reply})
+            self.history.append(
+                {settings.ROLE_KEY: settings.LLM_ROLE_STR, settings.CONTENT_KEY: reply}
+            )
         elif self.history:
             self.history.pop()
 
     def prepare_api_messages(self) -> list[dict[str, str]]:
         api_messages = []
         if self.system_prompt:
-            api_messages.append({settings.ROLE_KEY: settings.SYSTEM_ROLE_STR,
-                                 settings.CONTENT_KEY: self.system_prompt})
+            api_messages.append(
+                {
+                    settings.ROLE_KEY: settings.SYSTEM_ROLE_STR,
+                    settings.CONTENT_KEY: self.system_prompt,
+                }
+            )
         api_messages.extend(self.history)
         return api_messages
 
@@ -179,8 +180,10 @@ class AIAgent:
                 continue
 
             messages: list[dict[str, str]] = [
-                {settings.ROLE_KEY: settings.USER_ROLE_STR,
-                 settings.CONTENT_KEY: f'{user_prompt}\n\n{chunk}'}
+                {
+                    settings.ROLE_KEY: settings.USER_ROLE_STR,
+                    settings.CONTENT_KEY: f'{user_prompt}\n\n{chunk}',
+                }
             ]
             print_colored(settings.LLM_AUTHOR_STR, settings.Colors.cyan)
             self.get_llm_response(messages)
@@ -196,8 +199,9 @@ class AIAgent:
         if limit_chars and len(new_text) > limit_chars:
             new_text = new_text[-limit_chars:]
 
-        self.history.append({settings.ROLE_KEY: settings.USER_ROLE_STR,
-                             settings.CONTENT_KEY: new_text})
+        self.history.append(
+            {settings.ROLE_KEY: settings.USER_ROLE_STR, settings.CONTENT_KEY: new_text}
+        )
 
         if limit_message:
             while len(self.history) > limit_message:
@@ -215,9 +219,7 @@ class AIAgent:
 
         for path in files_paths:
             correct_path = path.strip()
-            if process_file_not_found(correct_path) or process_exceeding_file_limit(
-                correct_path
-            ):
+            if process_file_not_found(correct_path) or process_exceeding_file_limit(correct_path):
                 continue
 
             try:
@@ -278,7 +280,7 @@ class AIAgent:
         if command.startswith(settings.CHUNK_MODE_COMMAND):
             self.chunk_mode(command)
             return True
-            
+
         return True
 
     def run(self) -> None:

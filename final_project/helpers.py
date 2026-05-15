@@ -45,7 +45,7 @@ def prepare_chunks(content: str, chunk_type: str, chunk_value: int) -> list[str]
         paragraphs: list[str] = re.split(r'\n{2,}', content)
         paragraphs = [p.strip() for p in paragraphs if p.strip()]
         return [
-            '\n\n'.join(paragraphs[i: i + chunk_value])
+            '\n\n'.join(paragraphs[i : i + chunk_value])
             for i in range(0, len(paragraphs), chunk_value)
         ]
     else:
