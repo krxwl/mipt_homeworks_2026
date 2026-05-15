@@ -6,7 +6,7 @@ from typing import Any
 from openai import OpenAI
 
 import settings
-from helpers import clear_screen, print_colored, get_file_content
+from services import clear_screen, print_colored, get_file_content
 
 
 def get_yaml_configuration() -> dict[str, Any]:
@@ -18,11 +18,14 @@ def get_yaml_configuration() -> dict[str, Any]:
 
 
 def fill_config(config: dict[str, Any], res: dict[str, Any]) -> None:
-    res['model'] = os.environ.get('MODEL_NAME', config.get('model'))
     env_limit_message: int = os.environ.get('LIMIT_MESSAGE')
-    res['limit_message'] = int(env_limit_message or config.get('limit_message') or 0) or None
+    raw_limit_message = int(env_limit_message or config.get('limit_message') or 0)
+    res['limit_message'] = raw_limit_message or None
+
     env_chars: int = int(os.environ.get('LIMIT_CHARS'))
-    res['limit_chars'] = int(env_chars or config.get('limit_chars') or 0) or None
+    raw_limit_chars = int(env_chars or config.get('limit_chars') or 0)
+    res['limit_chars'] = raw_limit_chars or None
+
     env_temperature: float = float(os.environ.get('TEMPERATURE'))
     res['temperature'] = float(env_temperature or config.get('temperature', 0.7))
     res['system_prompt'] = config.get('system_prompt')
@@ -63,7 +66,7 @@ def prepare_chunks(content: str, chunk_type: str, chunk_value: int) -> list[str]
     else:
         chunks: list[str] = []
         for i in range(0, len(content), chunk_value):
-            chunks.append(content[i : i + chunk_value])
+            chunks.append(content[i: i + chunk_value])
         return chunks
 
 
@@ -123,14 +126,55 @@ def process_response(response: Any) -> str:
     return ''.join(reply)
 
 
+def prepare_api_messages(agent: 'AIAgent') -> list[dict[str, str]]:
+    api_messages = []
+    if agent.system_prompt:
+        api_messages.append(
+            {
+                settings.ROLE_KEY: settings.SYSTEM_ROLE_STR,
+                settings.CONTENT_KEY: agent.system_prompt,
+            }
+        )
+    api_messages.extend(agent.history)
+    return api_messages
+
+
+def handle_command(agent: 'AIAgent', command: str) -> bool:
+    """обрабатывает команды решвет продолжать ли цикл"""
+    if command == settings.QUIT_COMMAND:
+        return False
+
+    if command == settings.RESET_COMMAND:
+        agent.history.clear()
+        clear_screen()
+        print(settings.CONTEXT_CLEARED_TEXT)
+        return True
+
+    if command.startswith(settings.CHUNK_MODE_COMMAND):
+        agent.chunk_mode(command)
+        return True
+
+    return True
+
+
+def print_reply(agent: 'AIAgent', reply: str | None) -> None:
+    if reply:
+        print_colored(f'{reply}\n', settings.Colors.cyan)
+        agent.history.append(
+            {settings.ROLE_KEY: settings.LLM_ROLE_STR, settings.CONTENT_KEY: reply}
+        )
+    elif agent.history:
+        agent.history.pop()
+
+
 def process_single_command(agent: 'AIAgent', command: str) -> bool:
     """обрабатывает одну команду возвращает False если цикл приложения нужно завершить"""
     if command.startswith(('/', settings.QUIT_COMMAND)):
-        return agent.handle_command(command)
+        return handle_command(agent, command)
 
     processed_text = agent.process_inline_files(command)
     agent.follow_context_limits(processed_text)
-    agent.print_reply(agent.get_llm_response(agent.prepare_api_messages()))
+    print_reply(agent, agent.get_llm_response(prepare_api_messages(agent)))
     return True
 
 
@@ -169,19 +213,9 @@ def load_config() -> dict[str, Any]:
     return res
 
 
-def print_reply(agent: 'AIAgent', reply: str | None) -> None:
-    if reply:
-        print_colored(f'{reply}\n', settings.Colors.cyan)
-        agent.history.append(
-            {settings.ROLE_KEY: settings.LLM_ROLE_STR, settings.CONTENT_KEY: reply}
-        )
-    elif agent.history:
-        agent.history.pop()
-
-
 class AIAgent:
     def __init__(self) -> None:
-        self.config: dict[str, Any] = self.load_config()
+        self.config: dict[str, Any] = load_config()
 
         api_host = self.config['api_host']
         api_key = self.config['api_key']
@@ -189,18 +223,6 @@ class AIAgent:
         self.client = OpenAI(base_url=api_host, api_key=api_key)
         self.history: list[dict[str, str]] = []
         self.system_prompt: str | None = self.config.get('system_prompt')
-
-    def prepare_api_messages(self) -> list[dict[str, str]]:
-        api_messages = []
-        if self.system_prompt:
-            api_messages.append(
-                {
-                    settings.ROLE_KEY: settings.SYSTEM_ROLE_STR,
-                    settings.CONTENT_KEY: self.system_prompt,
-                }
-            )
-        api_messages.extend(self.history)
-        return api_messages
 
     def execute_chunk_processing(self, chunks: list[str], user_prompt: str, auto_yes: bool) -> None:
         """отправляет чанки в LLM и обрабатывает паузы пользователя"""
@@ -285,23 +307,6 @@ class AIAgent:
             prepare_chunks(content, chunk_type, chunk_value), inputs[1], auto_yes
         )
         print_colored(settings.PROCESS_PROMPT_ENDED_TEXT, settings.Colors.green)
-
-    def handle_command(self, command: str) -> bool:
-        """обрабатывает команды"""
-        if command == settings.QUIT_COMMAND:
-            return False
-
-        if command == settings.RESET_COMMAND:
-            self.history.clear()
-            clear_screen()
-            print(settings.CONTEXT_CLEARED_TEXT)
-            return True
-
-        if command.startswith(settings.CHUNK_MODE_COMMAND):
-            self.chunk_mode(command)
-            return True
-
-        return True
 
     def run(self) -> None:
         """основной цикл приложения"""
