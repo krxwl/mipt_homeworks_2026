@@ -11,7 +11,7 @@ def clear_screen() -> None:
 
 def print_colored(text: str, color: str, end: str = '\n', flush: bool = False) -> None:
     """печатает текст выбранным цветом"""
-    print(f'{color}{text}{Colors.RESET}', end=end, flush=flush)
+    print(f'{color}{text}{Colors.reset}', end=end, flush=flush)
 
 
 def get_file_content(file_path: str) -> str:
@@ -45,7 +45,7 @@ def prepare_chunks(content: str, chunk_type: str, chunk_value: int) -> list[str]
         paragraphs: list[str] = re.split(r'\n{2,}', content)
         paragraphs = [p.strip() for p in paragraphs if p.strip()]
         return [
-            '\n\n'.join(paragraphs[i : i + chunk_value])
+            '\n\n'.join(paragraphs[i: i + chunk_value])
             for i in range(0, len(paragraphs), chunk_value)
         ]
     else:
@@ -55,9 +55,9 @@ def prepare_chunks(content: str, chunk_type: str, chunk_value: int) -> list[str]
 def is_file_valid(path: str) -> bool:
     """проверяет файл на существование и размер до 5 мб"""
     if not os.path.exists(path):
-        print_colored(ERROR_FILE_NOT_FOUND, Colors.YELLOW)
+        print_colored(ERROR_FILE_NOT_FOUND, Colors.yellow)
         return False
     if os.path.getsize(path) > MAX_FILE_SIZE_BYTES:
-        print_colored(ERROR_EXCEED_FILE_SIZE_LIMIT, Colors.YELLOW)
+        print_colored(ERROR_EXCEED_FILE_SIZE_LIMIT, Colors.yellow)
         return False
     return True

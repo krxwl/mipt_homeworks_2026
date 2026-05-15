@@ -9,14 +9,14 @@ API_ERROR: str = '\nОшибка от сервера: '
 FILE_READING_ERROR: str = '\nОшибка чтения файла'
 
 GET_FILE_INPUT_TEXT = '\nВведите путь до файла:\n'
-GET_PROMPT_INPUT_TEXT = '\nВведите промпт:\n'
-PROCESS_PROMPT_TEXT = '\nНачинаю обработку промпта\n'
-PROCESS_PROMPT_ENDED_TEXT = '\nОбработка файла завершена\n'
-GET_COMMAND_INPUT_TEXT = '\n\nВведите команду:\n'
-CONTEXT_CLEARED_TEXT = '\nКонтекст очищен\n'
-GREETING_COMMANDS_TEXT = "Команды:\n'\\q' - выход из приложения\n'/reset' - очищает контекст"
+GET_PROMPT_INPUT_TEXT: str = '\nВведите промпт:\n'
+PROCESS_PROMPT_TEXT: str = '\nНачинаю обработку промпта\n'
+PROCESS_PROMPT_ENDED_TEXT: str = '\nОбработка файла завершена\n'
+GET_COMMAND_INPUT_TEXT: str = '\n\nВведите команду:\n'
+CONTEXT_CLEARED_TEXT: str = '\nКонтекст очищен\n'
+GREETING_COMMANDS_TEXT: str = "Команды:\n'\\\\q' - выход из приложения\n'/reset' - очищает контекст"
 LLM_AUTHOR_STR: str = '\nLLM: '
-INSTRUCTIONS_STR: str = '\nнажмите enter для продолжения, \\q для выхода'
+INSTRUCTIONS_STR: str = '\nнажмите enter для продолжения, \\\\q для выхода'
 
 SYSTEM_ROLE_STR: str = 'system'
 USER_ROLE_STR: str = 'user'
@@ -30,13 +30,18 @@ QUIT_COMMAND: str = r'\q'
 PARAGRAPH_CHUNK_TYPE: str = 'paragraph'
 CHARS_CHUNK_TYPE: str = 'len'
 
+ROLE_KEY = 'role'
+CONTENT_KEY = 'content'
+
+API_KEY_STR = 'api_key'
+API_HOST_STR = 'api_host'
+
 
 # enum для цветного текста в консоли
 class Colors:
-    RESET = '\033[0m'
-    RED = '\033[31m'
-    GREEN = '\033[32m'
-    YELLOW = '\033[33m'
-    BLUE = '\033[34m'
-    CYAN = '\033[36m'
-    GRAY = '\033[90m'
+    reset = '\033[0m'
+    red = '\033[31m'
+    green = '\033[32m'
+    yellow = '\033[33m'
+    blue = '\033[34m'
+    cyan = '\033[36m'
