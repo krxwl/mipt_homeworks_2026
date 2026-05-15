@@ -1,6 +1,6 @@
 MAX_FILE_SIZE_BYTES: int = 5 * 1024 * 1024  # 5 МБ
 
-ERROR_API_KEY_API_HOST_MISSING: str = "Ошибка: Не заданы параметры подключения (API_KEY, API_HOST).\n"
+ERROR_API_KEY_API_HOST_MISSING: str = 'Ошибка: Не заданы параметры подключения (API_KEY, API_HOST).'
 ERROR_ENV_VARIABLES_YUML_MISSING: str = 'Ошибка: нет config.yaml/переменных окружения\n'
 ERROR_REQUEST_INTERRRUPTED: str = '\nЗапрос прерван\n'
 ERROR_FILE_NOT_FOUND: str = '\nФайл не найден\n'
@@ -14,7 +14,7 @@ PROCESS_PROMPT_TEXT = '\nНачинаю обработку промпта\n'
 PROCESS_PROMPT_ENDED_TEXT = '\nОбработка файла завершена\n'
 GET_COMMAND_INPUT_TEXT = '\n\nВведите команду:\n'
 CONTEXT_CLEARED_TEXT = '\nКонтекст очищен\n'
-GREETING_COMMANDS_TEXT = "Доступные команды:\n'\\q' - выход из приложения\n'/reset' - очищает контекст"
+GREETING_COMMANDS_TEXT = "Команды:\n'\\q' - выход из приложения\n'/reset' - очищает контекст"
 LLM_AUTHOR_STR: str = '\nLLM: '
 INSTRUCTIONS_STR: str = '\nнажмите enter для продолжения, \\q для выхода'
 

@@ -1,6 +1,7 @@
 import os
 import re
-from settings import Colors, MAX_FILE_SIZE_BYTES, PARAGRAPH_CHUNK_TYPE, CHARS_CHUNK_TYPE, ERROR_FILE_NOT_FOUND, ERROR_EXCEED_FILE_SIZE_LIMIT
+from settings import Colors, MAX_FILE_SIZE_BYTES, PARAGRAPH_CHUNK_TYPE, CHARS_CHUNK_TYPE
+from settings import ERROR_FILE_NOT_FOUND, ERROR_EXCEED_FILE_SIZE_LIMIT
 
 def clear_screen() -> None:
     """очистка консоли"""
@@ -38,7 +39,8 @@ def prepare_chunks(content: str, chunk_type: str, chunk_value: int) -> list[str]
     if chunk_type == PARAGRAPH_CHUNK_TYPE:
         paragraphs: list[str] = re.split(r'\n{2,}', content)
         paragraphs = [p.strip() for p in paragraphs if p.strip()]
-        return ['\n\n'.join(paragraphs[i: i + chunk_value]) for i in range(0, len(paragraphs), chunk_value)]
+        return ['\n\n'.join(paragraphs[i: i + chunk_value]) for i in range(0, len(paragraphs),
+                                                                           chunk_value)]
     else:
         return [content[i:i + chunk_value] for i in range(0, len(content), chunk_value)]
 
