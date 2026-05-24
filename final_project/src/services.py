@@ -1,5 +1,5 @@
 import os
-from .settings import Colors
+from final_project.src.settings import Colors
 
 
 def clear_screen() -> None:
