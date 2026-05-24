@@ -5,7 +5,7 @@ import os
 import sys
 import re
 import yaml
-from typing import Any
+from typing import Any, cast
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessageParam
 from itertools import batched
@@ -285,7 +285,7 @@ class AIAgent:
         try:
             response = self.client.chat.completions.create(
                 model=self.config['model'],
-                messages=messages,
+                messages=cast(Any, messages),
                 temperature=self.config['temperature'],
                 stream=True,
             )
