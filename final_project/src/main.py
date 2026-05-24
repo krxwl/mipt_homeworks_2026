@@ -7,6 +7,7 @@ import re
 import yaml
 from typing import Any
 from openai import OpenAI
+from openai.types.chat import ChatCompletionMessageParam
 from itertools import batched
 from dotenv import load_dotenv
 
@@ -235,7 +236,7 @@ class AIAgent:
             if not chunk.strip():
                 continue
 
-            messages: list[dict[str, str]] = [
+            messages: list[ChatCompletionMessageParam] = [
                 {
                     settings.ROLE_KEY: settings.USER_ROLE_STR,
                     settings.CONTENT_KEY: f'{user_prompt}\n\n{chunk}',
