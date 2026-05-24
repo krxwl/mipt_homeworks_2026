@@ -7,7 +7,6 @@ import re
 import yaml
 from typing import Any, cast
 from openai import OpenAI
-from openai.types.chat import ChatCompletionMessageParam
 from itertools import batched
 from dotenv import load_dotenv
 
@@ -236,7 +235,7 @@ class AIAgent:
             if not chunk.strip():
                 continue
 
-            messages: list[ChatCompletionMessageParam] = [
+            messages: list[dict[str, str]] = [
                 {
                     settings.ROLE_KEY: settings.USER_ROLE_STR,
                     settings.CONTENT_KEY: f'{user_prompt}\n\n{chunk}',
@@ -280,7 +279,7 @@ class AIAgent:
 
         return text
 
-    def get_llm_response(self, messages: list[ChatCompletionMessageParam]) -> str | None:
+    def get_llm_response(self, messages: list[dict[str, str]]) -> str | None:
         """отправка запроса к модели"""
         try:
             response = self.client.chat.completions.create(
