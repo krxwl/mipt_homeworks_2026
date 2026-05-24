@@ -4,3 +4,8 @@ override-dependencies = [
     "openai",
     "types-PyYAML",
 ]
+
+[tool.mypy]
+mypy_path = "."
+explicit_package_bases = true
+ignore_missing_imports = false

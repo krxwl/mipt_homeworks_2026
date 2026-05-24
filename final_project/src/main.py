@@ -124,10 +124,8 @@ def process_response(response: Any) -> str:
         if not content:
             continue
 
-        # print(content, end='', flush=True)
         reply.append(content)
 
-    # print(flush=True)
     return ''.join(reply)
 
 
