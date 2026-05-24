@@ -1,13 +1,16 @@
 import os
 import sys
 import re
-import yaml  # type: ignore
+import yaml
 from typing import Any
-from openai import OpenAI  # type: ignore
+from openai import OpenAI
 from itertools import batched
+from dotenv import load_dotenv
 
-import settings
-from services import clear_screen, print_colored, get_file_content
+load_dotenv()
+
+from src import settings
+from src.services import clear_screen, print_colored, get_file_content
 
 
 def get_yaml_configuration() -> dict[str, Any]:
@@ -121,10 +124,10 @@ def process_response(response: Any) -> str:
         if not content:
             continue
 
-        print(content, end='', flush=True)
+        # print(content, end='', flush=True)
         reply.append(content)
 
-    print(flush=True)
+    # print(flush=True)
     return ''.join(reply)
 
 
@@ -211,6 +214,8 @@ def load_config() -> dict[str, Any]:
         sys.exit(1)
 
     fill_config(config, res)
+
+    res['model'] = os.environ.get('MODEL', config.get('model', 'qwen/qwen-2.5-7b-instruct'))
 
     return res
 

@@ -11,6 +11,7 @@
 1. Убедитесь, что у вас установлен Python 3.8+. Установите необходимые библиотеки:
    '''
    pip install openai pyyaml
+   pip install python-dotenv # библиотека для подгрузки env переменных
    '''
 2. Настройка конфигурации: Создайте файл config.yaml в корне проекта или задайте переменные окружения (API_KEY, API_HOST, LIMIT_CHARS, LIMIT_MESSAGE, TEMPERATURE). Пример config.yaml:
 
@@ -24,7 +25,7 @@ system_prompt: "Ты полезный ИИ-ассистент."
 
 3. Запуск. выполните команду в терминале
 
-python main.py
+python -m src.main (убедитесь что вы находитесь в папке final_project!!!)
 
 ## Структура проекта
 
