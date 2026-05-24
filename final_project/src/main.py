@@ -9,8 +9,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from src import settings
-from src.services import clear_screen, print_colored, get_file_content
+from . import settings
+from .services import clear_screen, print_colored, get_file_content
 
 
 def get_yaml_configuration() -> dict[str, Any]:
