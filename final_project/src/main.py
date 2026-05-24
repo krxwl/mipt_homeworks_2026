@@ -1,3 +1,6 @@
+from final_project.src import settings
+from final_project.src.services import clear_screen, print_colored, get_file_content
+
 import os
 import sys
 import re
@@ -8,9 +11,6 @@ from itertools import batched
 from dotenv import load_dotenv
 
 load_dotenv()
-
-from final_project.src import settings
-from final_project.src.services import clear_screen, print_colored, get_file_content
 
 
 def get_yaml_configuration() -> dict[str, Any]:
