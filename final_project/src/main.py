@@ -280,7 +280,7 @@ class AIAgent:
 
         return text
 
-    def get_llm_response(self, messages: list[dict[str, str]]) -> str | None:
+    def get_llm_response(self, messages: list[ChatCompletionMessageParam]) -> str | None:
         """отправка запроса к модели"""
         try:
             response = self.client.chat.completions.create(
