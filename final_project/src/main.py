@@ -10,7 +10,6 @@ from openai import OpenAI
 from itertools import batched
 from dotenv import load_dotenv
 
-sys.stdout.reconfigure(line_buffering=True)
 load_dotenv()
 
 
