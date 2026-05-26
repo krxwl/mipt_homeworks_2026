@@ -10,6 +10,7 @@ from openai import OpenAI
 from itertools import batched
 from dotenv import load_dotenv
 
+sys.stdout.reconfigure(line_buffering=True)
 load_dotenv()
 
 
@@ -123,9 +124,9 @@ def process_response(response: Any) -> str:
         content = chunk.choices[0].delta.content
         if not content:
             continue
-
+        print(content, end='', flush=True)
         reply.append(content)
-
+    print()
     return ''.join(reply)
 
 
@@ -162,7 +163,6 @@ def handle_command(agent: 'AIAgent', command: str) -> bool:
 
 def print_reply(agent: 'AIAgent', reply: str | None) -> None:
     if reply:
-        print_colored(f'{reply}\n', settings.Colors.cyan)
         agent.history.append(
             {settings.ROLE_KEY: settings.LLM_ROLE_STR, settings.CONTENT_KEY: reply}
         )
@@ -242,7 +242,7 @@ class AIAgent:
                 }
             ]
             print_colored(settings.LLM_AUTHOR_STR, settings.Colors.cyan)
-            self.get_llm_response(messages)
+            print_reply(self, self.get_llm_response(messages))
 
             if interrupt_chunks_processing(auto_yes):
                 break
@@ -316,7 +316,7 @@ class AIAgent:
     def run(self) -> None:
         """основной цикл приложения"""
         while True:
-            print(settings.GREETING_COMMANDS_TEXT, settings.Colors.blue)
+            print_colored(settings.GREETING_COMMANDS_TEXT, settings.Colors.blue)
             print_colored(settings.GET_COMMAND_INPUT_TEXT, settings.Colors.blue)
             user_input = input()
             command = user_input.strip()

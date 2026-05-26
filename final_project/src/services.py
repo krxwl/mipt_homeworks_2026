@@ -7,9 +7,9 @@ def clear_screen() -> None:
     os.system('cls' if os.name == 'nt' else 'clear')
 
 
-def print_colored(text: str, color: str, end: str = '\n', flush: bool = False) -> None:
+def print_colored(text: str, color: str, flush: bool = True) -> None:
     """печатает текст выбранным цветом"""
-    print(f'{color}{text}{Colors.reset}', end=end, flush=flush)
+    print(f'{color}{text}{Colors.reset}', flush=flush)
 
 
 def get_file_content(file_path: str) -> str:

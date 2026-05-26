@@ -25,7 +25,7 @@ system_prompt: "Ты полезный ИИ-ассистент."
 
 3. Запуск. выполните команду в терминале
 
-python -m src.main (убедитесь что вы находитесь в папке final_project!!!)
+python -m final_project.src.main
 
 ## Структура проекта
 
